@@ -25,7 +25,7 @@ main { flex: 1; padding: 32px 40px; }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1px; border: 1px solid var(--rule); }
 .card { background: var(--paper); text-decoration: none; color: var(--ink); display: block; transition: background 0.15s; }
 .card:hover { background: #eeecea; }
-.card-thumb { width: 100%; aspect-ratio: 4/3; overflow: hidden; border-bottom: 1px solid var(--rule); position: relative; }
+.card-thumb { width: 100%; aspect-ratio: 4/3; overflow: hidden; border-bottom: 1px solid var(--rule); }
 .card-thumb iframe { width: 200%; height: 200%; transform: scale(0.5); transform-origin: top left; pointer-events: none; border: none; }
 .card-body { padding: 16px 20px; }
 .card-concept { font-size: 10px; color: var(--muted); letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 5px; }
@@ -33,12 +33,11 @@ main { flex: 1; padding: 32px 40px; }
 .card-swatches { display: flex; gap: 4px; margin-bottom: 10px; }
 .swatch { width: 14px; height: 14px; border-radius: 50%; border: 0.5px solid rgba(0,0,0,0.08); }
 .card-meta { font-size: 10px; color: var(--muted); display: flex; justify-content: space-between; }
-.empty-state { padding: 80px 0; text-align: center; color: var(--muted); font-size: 12px; line-height: 2; border: 1px solid var(--rule); }
-.empty-arrow { font-family: var(--serif); font-size: 36px; font-style: italic; opacity: 0.2; display: block; margin-bottom: 8px; }
 footer { border-top: 1px solid var(--rule); padding: 16px 40px; font-size: 10px; color: var(--muted); letter-spacing: 0.06em; }
 </style>
 </head>
 <body>
+
 <header>
   <div class="header-left">
     <a class="logo" href="index.html">Visual Tone</a>
@@ -49,64 +48,170 @@ footer { border-top: 1px solid var(--rule); padding: 16px 40px; font-size: 10px;
 
 <div class="page-title">
   <h1>Outputs</h1>
-  <span class="count" id="count">loading...</span>
+  <span class="count" id="count"></span>
 </div>
 
 <main>
   <div class="grid" id="grid"></div>
-  <div class="empty-state" id="emptyState" style="display:none;">
-    <span class="empty-arrow">↗</span>
-    Use the generator to create a style,<br>then build a page and add it to outputs.json.
-  </div>
 </main>
 
 <footer>Visual Tone — RISD 2026</footer>
 
 <script>
-fetch('outputs.json')
-  .then(r => r.json())
-  .then(outputs => {
-    const grid = document.getElementById('grid');
-    const count = document.getElementById('count');
-    const empty = document.getElementById('emptyState');
+// ============================================================
+// ADD NEW OUTPUTS HERE — copy one block and edit the values
+// ============================================================
+const outputs = [
+  {
+    file: "outputs/cold-ocean.html",
+    concept: "cold ocean",
+    title: "Output 01",
+    colors: ["#257174","#2866a4","#3483a2","#4fa3c4","#5591ce"],
+    fonts: "Instrument Serif / DM Mono",
+    density: "sparse"
+  },
+  {
+    file: "outputs/winter.html",
+    concept: "winter",
+    title: "Output 02",
+    colors: ["#dde2e9","#c7cfe0","#b7c7d2","#b7cad7","#a0b5ca"],
+    fonts: "Instrument Serif / DM Mono",
+    density: "sparse"
+  },
+  {
+    file: "outputs/forest-night.html",
+    concept: "forest night",
+    title: "Output 03",
+    colors: ["#242a3d","#1e222f","#111322","#241b32","#14141f"],
+    fonts: "Instrument Serif / DM Mono",
+    density: "sparse"
+  },
+  {
+  file: "outputs/ink.html",
+  concept: "ink",
+  title: "Output 04",
+  colors: ["#3c588b","#22253f","#0c0916","#05070b","#131d2b"],
+  fonts: "Libre Baskerville', serif / Nunito', sans-serif",
+  density: "sparse"
+  
+},
+{
+  file: "outputs/你的文件名.html",
+  concept: "关键词",
+  title: "Output 04",
+  colors: ["#hex1","#hex2","#hex3","#hex4","#hex5"],
+  fonts: "字体1 / 字体2",
+  density: "sparse"
+},
+{
+  file: "outputs/你的文件名.html",
+  concept: "关键词",
+  title: "Output 04",
+  colors: ["#hex1","#hex2","#hex3","#hex4","#hex5"],
+  fonts: "字体1 / 字体2",
+  density: "sparse"
+},
+{
+  file: "outputs/你的文件名.html",
+  concept: "关键词",
+  title: "Output 04",
+  colors: ["#hex1","#hex2","#hex3","#hex4","#hex5"],
+  fonts: "字体1 / 字体2",
+  density: "sparse"
+},
+{
+  file: "outputs/你的文件名.html",
+  concept: "关键词",
+  title: "Output 04",
+  colors: ["#hex1","#hex2","#hex3","#hex4","#hex5"],
+  fonts: "字体1 / 字体2",
+  density: "sparse"
+},
+{
+  file: "outputs/你的文件名.html",
+  concept: "关键词",
+  title: "Output 04",
+  colors: ["#hex1","#hex2","#hex3","#hex4","#hex5"],
+  fonts: "字体1 / 字体2",
+  density: "sparse"
+},
+{
+  file: "outputs/你的文件名.html",
+  concept: "关键词",
+  title: "Output 04",
+  colors: ["#hex1","#hex2","#hex3","#hex4","#hex5"],
+  fonts: "字体1 / 字体2",
+  density: "sparse"
+},
+{
+  file: "outputs/你的文件名.html",
+  concept: "关键词",
+  title: "Output 04",
+  colors: ["#hex1","#hex2","#hex3","#hex4","#hex5"],
+  fonts: "字体1 / 字体2",
+  density: "sparse"
+},
+{
+  file: "outputs/你的文件名.html",
+  concept: "关键词",
+  title: "Output 04",
+  colors: ["#hex1","#hex2","#hex3","#hex4","#hex5"],
+  fonts: "字体1 / 字体2",
+  density: "sparse"
+},
+{
+  file: "outputs/你的文件名.html",
+  concept: "关键词",
+  title: "Output 04",
+  colors: ["#hex1","#hex2","#hex3","#hex4","#hex5"],
+  fonts: "字体1 / 字体2",
+  density: "sparse"
+},
+{
+  file: "outputs/你的文件名.html",
+  concept: "关键词",
+  title: "Output 04",
+  colors: ["#hex1","#hex2","#hex3","#hex4","#hex5"],
+  fonts: "字体1 / 字体2",
+  density: "sparse"
+},
+{
+  file: "outputs/你的文件名.html",
+  concept: "关键词",
+  title: "Output 04",
+  colors: ["#hex1","#hex2","#hex3","#hex4","#hex5"],
+  fonts: "字体1 / 字体2",
+  density: "sparse"
+},
+];
+// ============================================================
 
-    if (!outputs.length) {
-      grid.style.display = 'none';
-      empty.style.display = 'block';
-      count.textContent = '0 pages';
-      return;
-    }
+const grid = document.getElementById('grid');
+const count = document.getElementById('count');
+count.textContent = `${outputs.length} page${outputs.length > 1 ? 's' : ''}`;
 
-    count.textContent = `${outputs.length} page${outputs.length > 1 ? 's' : ''}`;
-
-    outputs.forEach(o => {
-      const card = document.createElement('a');
-      card.className = 'card';
-      card.href = o.file;
-      card.innerHTML = `
-        <div class="card-thumb">
-          <iframe src="${o.file}" scrolling="no" tabindex="-1"></iframe>
-        </div>
-        <div class="card-body">
-          <div class="card-concept">${o.concept}</div>
-          <div class="card-title">${o.title}</div>
-          <div class="card-swatches">
-            ${o.colors.map(c => `<div class="swatch" style="background:${c};"></div>`).join('')}
-          </div>
-          <div class="card-meta">
-            <span>${o.fonts}</span>
-            <span>${o.density}</span>
-          </div>
-        </div>
-      `;
-      grid.appendChild(card);
-    });
-  })
-  .catch(() => {
-    document.getElementById('count').textContent = '—';
-    document.getElementById('emptyState').style.display = 'block';
-    document.getElementById('grid').style.display = 'none';
-  });
+outputs.forEach(o => {
+  const card = document.createElement('a');
+  card.className = 'card';
+  card.href = o.file;
+  card.innerHTML = `
+    <div class="card-thumb">
+      <iframe src="${o.file}" scrolling="no" tabindex="-1"></iframe>
+    </div>
+    <div class="card-body">
+      <div class="card-concept">${o.concept}</div>
+      <div class="card-title">${o.title}</div>
+      <div class="card-swatches">
+        ${o.colors.map(c => `<div class="swatch" style="background:${c};"></div>`).join('')}
+      </div>
+      <div class="card-meta">
+        <span>${o.fonts}</span>
+        <span>${o.density}</span>
+      </div>
+    </div>
+  `;
+  grid.appendChild(card);
+});
 </script>
 </body>
 </html>
