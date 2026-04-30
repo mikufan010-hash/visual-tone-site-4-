@@ -1,0 +1,26 @@
+[
+  {
+    "file": "outputs/cold-ocean.html",
+    "concept": "cold ocean",
+    "title": "Output 01",
+    "colors": ["#257174","#2866a4","#3483a2","#4fa3c4","#5591ce"],
+    "fonts": "Instrument Serif / DM Mono",
+    "density": "sparse"
+  },
+  {
+    "file": "outputs/winter.html",
+    "concept": "winter",
+    "title": "Output 02",
+    "colors": ["#dde2e9","#c7cfe0","#b7c7d2","#b7cad7","#a0b5ca"],
+    "fonts": "Instrument Serif / DM Mono",
+    "density": "sparse"
+  },
+  {
+    "file": "outputs/forest-night.html",
+    "concept": "forest night",
+    "title": "Output 03",
+    "colors": ["#242a3d","#1e222f","#111322","#241b32","#14141f"],
+    "fonts": "Instrument Serif / DM Mono",
+    "density": "sparse"
+  }
+]
