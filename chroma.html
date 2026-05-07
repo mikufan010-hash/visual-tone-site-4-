@@ -1,0 +1,1802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chroma — Color Card Game</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f0ece3;
+  --table: #e8e2d6;
+  --surface: #fff;
+  --surface2: #f7f4ef;
+  --rule: rgba(0,0,0,0.08);
+  --rule2: rgba(0,0,0,0.15);
+  --ink: #1a1a1a;
+  --muted: rgba(0,0,0,0.35);
+  --mono: 'DM Mono', monospace;
+  --serif: 'Instrument Serif', serif;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 13px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+/* ── HEADER ── */
+header {
+  padding: 14px 32px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--rule2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.logo { font-family: var(--serif); font-style: italic; font-size: 24px; color: var(--ink); letter-spacing: -0.01em; }
+
+.status-bar {
+  display: flex;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+
+.status-pill {
+  background: var(--surface2);
+  border: 1px solid var(--rule2);
+  border-radius: 20px;
+  padding: 4px 12px;
+  color: var(--ink);
+  font-size: 11px;
+}
+
+.status-pill span { color: var(--muted); margin-right: 4px; }
+
+/* ── LAYOUT ── */
+.game-area {
+  flex: 1;
+  display: grid;
+  grid-template-rows: auto auto auto;
+  gap: 0;
+  padding: 20px 28px;
+  max-width: 1100px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ── ZONES ── */
+.zone-label {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+.ai-zone {
+  background: var(--table);
+  border: 1px solid var(--rule2);
+  border-radius: 16px 16px 0 0;
+  padding: 16px 20px;
+  border-bottom: none;
+}
+
+.player-zone {
+  background: var(--surface);
+  border: 1px solid var(--rule2);
+  border-radius: 0 0 16px 16px;
+  padding: 16px 20px;
+  border-top: none;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+}
+
+/* ── BATTLE AREA ── */
+.battle-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  padding: 16px 20px;
+  min-height: 180px;
+  background: var(--surface2);
+  border: 1px solid var(--rule2);
+  position: relative;
+}
+
+.played-slot {
+  width: 110px;
+  height: 155px;
+  border: 2px dashed rgba(0,0,0,0.12);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: rgba(255,255,255,0.5);
+  transition: border-color 0.2s;
+}
+
+.played-slot.has-card { border-color: transparent; background: transparent; }
+
+.played-slot-label {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+  text-align: center;
+}
+
+.vs {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 36px;
+  color: rgba(0,0,0,0.12);
+  flex-shrink: 0;
+}
+
+/* ── DICE ── */
+.dice-area {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dice-display {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+}
+
+.die {
+  width: 36px;
+  height: 36px;
+  background: var(--surface);
+  border: 2px solid var(--rule2);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ink);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  transition: transform 0.06s ease, background 0.2s, border-color 0.2s;
+}
+
+.die.highlight { border-color: #111; background: #111; color: #fff; }
+
+@keyframes diePop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.35) rotate(-8deg); }
+  70%  { transform: scale(1.2) rotate(5deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+@keyframes confettiFall {
+  0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+@keyframes winPop {
+  0%   { transform: scale(0.6) translateY(30px); opacity: 0; }
+  60%  { transform: scale(1.08) translateY(-6px); opacity: 1; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+@keyframes cardFly {
+  0%   { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+  100% { transform: translateY(-120vh) rotate(540deg) scale(0.3); opacity: 0; }
+}
+
+/* ── SKIN SELECTOR ── */
+.skin-bar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 28px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--rule2);
+  overflow-x: auto;
+}
+
+.skin-label {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+  margin-right: 4px;
+}
+
+.skin-swatch {
+  display: flex;
+  gap: 2px;
+  padding: 4px 8px;
+  border: 1px solid var(--rule2);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.15s;
+  align-items: center;
+  background: var(--surface2);
+  white-space: nowrap;
+}
+
+.skin-swatch:hover { border-color: var(--ink); }
+.skin-swatch.active { border-color: var(--ink); background: var(--ink); }
+.skin-swatch.active .skin-dot { border-color: rgba(255,255,255,0.3); }
+.skin-swatch.active .skin-name { color: #fff; }
+
+.skin-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid rgba(0,0,0,0.1);
+}
+
+.skin-name {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin-left: 4px;
+}
+
+.hand {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-height: 155px;
+  align-items: flex-start;
+}
+
+.card {
+  width: 100px;
+  height: 145px;
+  border-radius: 10px;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.2s, box-shadow 0.2s;
+  transform-style: preserve-3d;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.12));
+}
+
+.card:hover { transform: translateY(-8px); filter: drop-shadow(0 8px 16px rgba(0,0,0,0.18)); }
+.card.selected { transform: translateY(-16px); filter: drop-shadow(0 12px 20px rgba(0,0,0,0.22)); outline: 3px solid #111; outline-offset: 2px; border-radius: 10px; }
+.card.flipped .card-inner { transform: rotateY(180deg); }
+
+.card-inner {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.5s cubic-bezier(0.4,0,0.2,1);
+  border-radius: 10px;
+}
+
+.card-face, .card-back-face {
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 12px;
+}
+
+.card-back-face {
+  transform: rotateY(180deg);
+  background: #1a1a1a;
+  border: 1px solid rgba(255,255,255,0.1);
+  font-size: 9px;
+  color: rgba(255,255,255,0.5);
+  line-height: 1.7;
+  overflow: hidden;
+}
+
+.card-face {
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+.card-points {
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1;
+  font-family: var(--serif);
+  font-style: italic;
+}
+
+.card-name {
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.85;
+  word-break: break-all;
+  line-height: 1.3;
+}
+
+.card-tap-hint {
+  font-size: 8px;
+  opacity: 0.35;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+/* rainbow card */
+.card.rainbow .card-face {
+  background: linear-gradient(135deg, #ff6b6b, #ffd93d, #6bcb77, #4ecdc4, #45b7d1, #a855f7, #ff6b6b);
+  animation: rainbowShift 3s linear infinite;
+  background-size: 200% 200%;
+  border-color: rgba(255,255,255,0.5);
+  box-shadow: 0 0 24px rgba(255,200,100,0.4);
+}
+
+@keyframes rainbowShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* AI cards face down */
+.ai-hand .card-face { display: none; }
+.ai-hand .card { cursor: default; }
+.ai-hand .card:hover { transform: none; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.12)); }
+.ai-hand .card-back-cover {
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  background: #2a2a2a;
+  border: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 14px;
+  color: rgba(255,255,255,0.25);
+}
+
+/* ── CONTROLS ── */
+.controls {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.btn {
+  background: var(--surface2);
+  border: 1px solid var(--rule2);
+  border-radius: 6px;
+  padding: 9px 18px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-weight: 500;
+}
+
+.btn:hover { background: #e0dbd0; border-color: rgba(0,0,0,0.25); }
+.btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.btn.primary { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+.btn.primary:hover { background: #333; border-color: #333; }
+.btn.danger { border-color: rgba(180,60,60,0.3); color: #c0392b; background: rgba(180,60,60,0.06); }
+.btn.danger:hover { background: rgba(180,60,60,0.12); }
+
+/* ── LOG ── */
+.log {
+  font-size: 12px;
+  color: var(--muted);
+  min-height: 20px;
+  padding: 10px 14px;
+  margin-top: 10px;
+  line-height: 1.6;
+  letter-spacing: 0.02em;
+  background: var(--surface2);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+}
+
+.log .em { color: var(--ink); font-weight: 500; }
+.log .win { color: #2e7d32; font-weight: 500; }
+.log .lose { color: #c0392b; font-weight: 500; }
+
+/* ── OVERLAY ── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(240,236,227,0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  backdrop-filter: blur(6px);
+}
+
+.overlay-box {
+  background: var(--surface);
+  border: 1px solid var(--rule2);
+  border-radius: 16px;
+  padding: 48px 56px;
+  text-align: center;
+  max-width: 380px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.12);
+}
+
+.overlay-title {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 48px;
+  margin-bottom: 12px;
+  color: var(--ink);
+}
+
+.overlay-sub {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.8;
+  margin-bottom: 28px;
+}
+
+/* ── MIX PANEL ── */
+.mix-panel {
+  background: var(--surface2);
+  border: 1px solid var(--rule2);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-top: 10px;
+  display: none;
+}
+
+.mix-panel.visible { display: block; }
+.mix-panel-title { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+.mix-targets { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.mix-target {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  cursor: pointer;
+  border: 1px solid rgba(0,0,0,0.1);
+  transition: all 0.12s;
+  font-weight: 500;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+.mix-target:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+
+/* ── OVERLAY ── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  backdrop-filter: blur(4px);
+}
+
+.overlay-box {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  padding: 40px 48px;
+  text-align: center;
+  max-width: 360px;
+}
+
+.overlay-title {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 42px;
+  margin-bottom: 12px;
+}
+
+.overlay-sub {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.8;
+  margin-bottom: 28px;
+}
+
+/* ── MIX PANEL ── */
+.mix-panel {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-top: 12px;
+  display: none;
+}
+
+.mix-panel.visible { display: block; }
+.mix-panel-title { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+.mix-targets { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.mix-target {
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.15);
+  transition: all 0.12s;
+  background: var(--surface2);
+}
+.mix-target:hover { border-color: rgba(255,255,255,0.4); transform: scale(1.03); }
+
+/* ── TUTORIAL ── */
+.tutorial-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  pointer-events: none;
+}
+
+.tutorial-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(20,18,14,0.7);
+  backdrop-filter: blur(2px);
+  pointer-events: all;
+}
+
+.tutorial-box {
+  position: fixed;
+  background: var(--surface);
+  border: 1px solid var(--rule2);
+  border-radius: 14px;
+  padding: 24px 28px;
+  width: 320px;
+  max-height: 80vh;
+  overflow-y: auto;
+  pointer-events: all;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.2);
+  z-index: 201;
+}
+
+.tutorial-step {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.tutorial-title {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 26px;
+  color: var(--ink);
+  margin-bottom: 10px;
+  line-height: 1.2;
+}
+
+.tutorial-body {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.8;
+  margin-bottom: 20px;
+}
+
+.tutorial-body strong { color: var(--ink); }
+
+.tutorial-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.tutorial-dots {
+  display: flex;
+  gap: 5px;
+}
+
+.tutorial-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--rule2);
+  transition: background 0.2s;
+}
+
+.tutorial-dot.active { background: var(--ink); }
+
+.tutorial-highlight {
+  position: absolute;
+  border-radius: 10px;
+  box-shadow: 0 0 0 3px #f0ece3, 0 0 0 6px rgba(255,255,255,0.8), 0 0 0 9px rgba(0,0,0,0.15);
+  pointer-events: none;
+  transition: all 0.4s cubic-bezier(0.4,0,0.2,1);
+  z-index: 201;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="logo">Chroma</span>
+  <div class="status-bar">
+    <div class="status-pill"><span>Round</span><span id="roundNum">1</span></div>
+    <div class="status-pill"><span>Your cards</span><span id="playerCount">—</span></div>
+    <div class="status-pill"><span>AI cards</span><span id="aiCount">—</span></div>
+    <div class="status-pill" id="turnIndicator">—</div>
+  </div>
+</header>
+
+<div class="skin-bar" id="skinBar">
+  <span class="skin-label">Card skin</span>
+</div>
+
+<div class="game-area">
+
+  <div class="ai-zone">
+    <div class="zone-label">AI hand</div>
+    <div class="hand ai-hand" id="aiHand"></div>
+  </div>
+
+  <div class="battle-area">
+    <div>
+      <div class="played-slot-label">AI plays</div>
+      <div class="played-slot" id="aiPlayed">—</div>
+    </div>
+    <div class="vs">vs</div>
+    <div>
+      <div class="played-slot-label">You play</div>
+      <div class="played-slot" id="playerPlayed">—</div>
+    </div>
+    <div class="dice-area">
+      <div class="dice-display">
+        <span>You</span>
+        <div class="die" id="playerDie">—</div>
+      </div>
+      <div class="dice-display">
+        <span>AI</span>
+        <div class="die" id="aiDie">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="player-zone">
+    <div class="zone-label">Your hand — <span id="actionHint">roll to start</span></div>
+    <div class="hand" id="playerHand"></div>
+
+    <div class="mix-panel" id="mixPanel">
+      <div class="mix-panel-title">Mix selected card with:</div>
+      <div class="mix-targets" id="mixTargets"></div>
+    </div>
+
+    <div class="controls">
+      <button class="btn primary" id="rollBtn">Roll dice</button>
+      <button class="btn" id="playBtn" disabled>Play selected</button>
+      <button class="btn" id="mixBtn" disabled>Mix cards</button>
+      <button class="btn danger" id="surrenderBtn">Surrender</button>
+    </div>
+
+    <div class="log" id="log">Welcome to Chroma. Roll the dice to begin.</div>
+  </div>
+
+</div>
+
+<div class="overlay" id="overlay" style="display:none;">
+  <div class="overlay-box">
+    <div class="overlay-title" id="overlayTitle">—</div>
+    <div class="overlay-sub" id="overlaySub">—</div>
+    <button class="btn primary" onclick="startGame()">Play again</button>
+  </div>
+</div>
+
+<script>
+// Base colors — everything else is dynamically generated
+const BASE_COLORS = {
+  red:    { h:0,   s:72, l:60, text:'#fff', points:3 },
+  yellow: { h:48,  s:78, l:60, text:'#111', points:3 },
+  blue:   { h:220, s:58, l:52, text:'#fff', points:3 },
+  white:  { h:40,  s:20, l:92, text:'#111', points:3 },
+};
+
+// Dynamic card store — grows as cards get mixed
+const CARD_STORE = {};
+Object.entries(BASE_COLORS).forEach(([name, data]) => {
+  CARD_STORE[name] = { ...data, name, components: [name] };
+});
+CARD_STORE['rainbow'] = { h:0, s:100, l:60, text:'#fff', points:99, name:'rainbow', components:[] };
+
+function hslToHex(h, s, l) {
+  s /= 100; l /= 100;
+  const a = s * Math.min(l, 1 - l);
+  const f = n => {
+    const k = (n + h / 30) % 12;
+    const c = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+    return Math.round(255 * c).toString(16).padStart(2, '0');
+  };
+  return `#${f(0)}${f(8)}${f(4)}`;
+}
+
+function mixHSL(h1, s1, l1, h2, s2, l2) {
+  // Hue: circular average
+  const diff = ((h2 - h1 + 540) % 360) - 180;
+  const h = (h1 + diff / 2 + 360) % 360;
+  const s = Math.min(100, (s1 + s2) / 2 + 5); // slight saturation boost
+  const l = Math.max(20, Math.min(80, (l1 + l2) / 2));
+  return { h, s, l };
+}
+
+function getCardData(name) {
+  return CARD_STORE[name] || null;
+}
+
+function cardPoints(card) {
+  if(typeof card === 'string') {
+    return CARD_STORE[card]?.points || 3;
+  }
+  return card.points || 3;
+}
+
+function getCardHex(name) {
+  const d = getCardData(name);
+  if(!d) return '#888';
+  if(name === 'rainbow') return null;
+  return hslToHex(d.h, d.s, d.l);
+}
+
+function getTextColor(name) {
+  return getCardData(name)?.text || '#fff';
+}
+
+// Mix two cards — creates new card in CARD_STORE if needed
+function mixCards(nameA, nameB) {
+  if(nameA === nameB) return null;
+  if(nameA === 'rainbow' || nameB === 'rainbow') return null;
+
+  const key = [nameA, nameB].sort().join('+');
+  if(CARD_STORE[key]) return key;
+
+  const a = getCardData(nameA);
+  const b = getCardData(nameB);
+  if(!a || !b) return null;
+
+  const { h, s, l } = mixHSL(a.h, a.s, a.l, b.h, b.s, b.l);
+  const points = a.points + b.points;
+  const textColor = l > 55 ? '#111' : '#fff';
+  const components = [...(a.components || [nameA]), ...(b.components || [nameB])];
+  const displayName = key; // use key as name
+
+  CARD_STORE[key] = { h, s, l, text: textColor, points, name: key, components };
+  return key;
+}
+
+function getDisplayName(name) {
+  if(BASE_COLORS[name]) return name;
+  if(name === 'rainbow') return 'rainbow';
+  // shorten long mixed names
+  const parts = name.split('+');
+  if(parts.length <= 3) return name;
+  return parts.slice(0,2).join('+') + `+…(${parts.length})`;
+}
+
+const RAINBOW_SET = ['red','orange','yellow','green','blue','purple','cyan'];
+
+function checkRainbow(hand) {
+  // rainbow check: has all 7 hues represented in components
+  const allComponents = hand.flatMap(c => CARD_STORE[c.name]?.components || [c.name]);
+  const hueNames = ['red','yellow','blue','white','orange','green','purple','pink','cyan','teal','magenta','violet','amber','lightblue','cream'];
+  // simplified: check if hand contains cards covering a wide hue spread
+  const hues = hand.map(c => CARD_STORE[c.name]?.h || 0);
+  const spread = Math.max(...hues) - Math.min(...hues);
+  return spread >= 300 && hand.length >= 4;
+}
+
+const BASE_DECK_1 = ['red','red','red','red','red','yellow','yellow','yellow','yellow','yellow','blue','blue','blue','blue','blue','white','white','white','white','white'];
+const SUPPLEMENT_5 = ['red','yellow','blue','blue','yellow','red'];
+const SUPPLEMENT_15 = ['red','yellow','blue','white','red','yellow','blue','white','red'];
+
+let state = {};
+
+function shuffle(arr) {
+  const a = [...arr];
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+
+function pick(arr, n) {
+  const s = shuffle(arr);
+  return s.slice(0, n);
+}
+
+function canMix(a, b) {
+  if(a === b) return null;
+  if(a === 'rainbow' || b === 'rainbow') return null;
+  return mixCards(a, b);
+}
+
+
+function startGame() {
+  document.getElementById('overlay').style.display = 'none';
+  state = {
+    round: 1,
+    turn: 'roll',
+    playerTurn: null,
+    playerHand: [],
+    aiHand: [],
+    playerPlayed: null,
+    aiPlayed: null,
+    playerDie: null,
+    aiDie: null,
+    selectedCard: null,
+    mixMode: false,
+    mixSource: null,
+    flippedCards: new Set(),
+    supplementGiven5: false,
+    supplementGiven15: false,
+  };
+
+  const deck = shuffle(BASE_DECK_1);
+  state.playerHand = deck.slice(0,10).map(n=>({name:n, id:Math.random()}));
+  state.aiHand     = deck.slice(10,20).map(n=>({name:n, id:Math.random()}));
+
+  render();
+  applySkin();
+  log('Cards dealt. <span class="em">Roll the dice</span> to decide who goes first.');
+}
+
+
+function render() {
+  renderHand('playerHand', state.playerHand, true);
+  renderHand('aiHand', state.aiHand, false);
+  renderPlayed();
+  updateButtons();
+  updateStatus();
+  renderMixPanel();
+
+  // Out of cards check
+  if(state.playerHand.length === 0 && state.turn !== 'roll') {
+    endGame('lose', 'You ran out of cards!');
+    return;
+  }
+  if(state.aiHand.length === 0 && state.turn !== 'roll') {
+    endGame('win', 'The AI ran out of cards!');
+    return;
+  }
+
+  // supplements
+  if(state.round >= 5 && !state.supplementGiven5) {
+    state.supplementGiven5 = true;
+    const cards = pick(SUPPLEMENT_5, 3);
+    state.playerHand.push(...cards.map(n=>({name:n,id:Math.random()})));
+    state.aiHand.push(...cards.map(n=>({name:n,id:Math.random()})));
+    log(`<span class="em">Round 5!</span> Both players receive 3 bonus cards.`);
+    renderHand('playerHand', state.playerHand, true);
+    renderHand('aiHand', state.aiHand, false);
+  }
+
+  if(state.round >= 15 && !state.supplementGiven15) {
+    state.supplementGiven15 = true;
+    const cards = pick(SUPPLEMENT_15, 5);
+    state.playerHand.push(...cards.map(n=>({name:n,id:Math.random()})));
+    state.aiHand.push(...cards.map(n=>({name:n,id:Math.random()})));
+    log(`<span class="em">Round 15!</span> Both players receive 5 bonus cards.`);
+    renderHand('playerHand', state.playerHand, true);
+    renderHand('aiHand', state.aiHand, false);
+  }
+}
+
+function renderHand(id, hand, isPlayer) {
+  const el = document.getElementById(id);
+  el.innerHTML = '';
+  hand.forEach(card => {
+    const cd = getCardData(card.name);
+    if(!cd) return;
+    const isRainbow = card.name === 'rainbow';
+    const isSelected = state.selectedCard?.id === card.id;
+    const isFlipped = state.flippedCards?.has(card.id);
+    const hex = isRainbow ? null : getCardHex(card.name);
+    const textCol = cd.text;
+    const pts = cd.points;
+    const displayName = getDisplayName(card.name);
+    const components = cd.components || [card.name];
+    const histText = components.length > 1 ? components.join(' + ') : card.name;
+
+    const div = document.createElement('div');
+    div.className = `card${isRainbow?' rainbow':''}${isSelected?' selected':''}${isFlipped?' flipped':''}`;
+    div.dataset.id = card.id;
+
+    if(!isPlayer) {
+      div.innerHTML = `
+        <div class="card-inner">
+          <div class="card-face" style="background:${hex||'#333'};color:${textCol};">
+            <div class="card-points">${pts}</div>
+            <div class="card-name">${displayName}</div>
+          </div>
+          <div class="card-back-cover">Chroma</div>
+        </div>`;
+      el.appendChild(div);
+      return;
+    }
+
+    const skinBg = getSkinCardBg(card.name);
+    const finalBg = isRainbow ? 'transparent' : (skinBg || hex);
+    const finalBorder = getSkinCardBorder();
+    const finalBackBg = getSkinBackBg();
+
+    div.innerHTML = `
+      <div class="card-inner">
+        <div class="card-face" style="background:${finalBg};color:${textCol};border:1px solid ${finalBorder};">
+          <div class="card-points">${pts}pt</div>
+          <div class="card-name">${displayName}</div>
+          <div class="card-tap-hint">tap for info</div>
+        </div>
+        <div class="card-back-face" style="background:${finalBackBg};">
+          <div style="font-size:11px;color:#fff;margin-bottom:4px;">${displayName}</div>
+          <div style="color:rgba(255,255,255,0.4);font-size:9px;margin-bottom:8px;">${pts} points</div>
+          <div style="font-size:9px;line-height:1.7;color:rgba(255,255,255,0.5);">
+            <div style="color:rgba(255,255,255,0.3);margin-bottom:3px;">Mix history</div>
+            ${histText}
+          </div>
+        </div>
+      </div>`;
+
+    div.addEventListener('click', () => {
+      if(state.mixMode) { handleMixTarget(card); return; }
+      if(isSelected) {
+        state.flippedCards = state.flippedCards || new Set();
+        if(state.flippedCards.has(card.id)) state.flippedCards.delete(card.id);
+        else state.flippedCards.add(card.id);
+        renderHand('playerHand', state.playerHand, true);
+        return;
+      }
+      selectCard(card);
+    });
+
+    el.appendChild(div);
+  });
+}
+
+function selectCard(card) {
+  if(state.turn !== 'player' && state.turn !== 'respond') return;
+  state.selectedCard = card;
+  state.mixMode = false;
+  state.mixSource = null;
+  renderHand('playerHand', state.playerHand, true);
+  updateButtons();
+  renderMixPanel();
+}
+
+function renderPlayed() {
+  const pp = document.getElementById('playerPlayed');
+  const ap = document.getElementById('aiPlayed');
+
+  function slotHTML(card) {
+    if(!card) return '—';
+    const isRainbow = card.name === 'rainbow';
+    const hex = isRainbow ? null : getCardHex(card.name);
+    const cd = getCardData(card.name);
+    const bg = isRainbow ? 'linear-gradient(135deg,#ff6b6b,#ffd93d,#6bcb77,#4ecdc4,#45b7d1,#a855f7)' : hex;
+    return `<div style="width:100%;height:100%;border-radius:8px;background:${bg};display:flex;flex-direction:column;justify-content:space-between;padding:10px;border:1px solid rgba(255,255,255,0.15);">
+      <div style="font-size:18px;font-weight:500;color:${cd.text};">${cd.points}pt</div>
+      <div style="font-size:10px;color:${cd.text};opacity:0.8;text-transform:uppercase;word-break:break-all;">${getDisplayName(card.name)}</div>
+    </div>`;
+  }
+
+  if(state.playerPlayed) { pp.className='played-slot has-card'; pp.innerHTML=slotHTML(state.playerPlayed); }
+  else { pp.className='played-slot'; pp.innerHTML='—'; }
+
+  if(state.aiPlayed) { ap.className='played-slot has-card'; ap.innerHTML=slotHTML(state.aiPlayed); }
+  else { ap.className='played-slot'; ap.innerHTML='—'; }
+}
+
+function updateStatus() {
+  document.getElementById('roundNum').textContent = state.round;
+  document.getElementById('playerCount').textContent = state.playerHand.length;
+  document.getElementById('aiCount').textContent = state.aiHand.length;
+  const hints = {
+    roll: 'Roll dice',
+    player: 'Your turn — place a card',
+    ai: 'AI is thinking...',
+    respond: 'Respond to AI card',
+  };
+  document.getElementById('turnIndicator').textContent = hints[state.turn] || '';
+  document.getElementById('actionHint').textContent = hints[state.turn] || '';
+}
+
+function updateButtons() {
+  const rollBtn  = document.getElementById('rollBtn');
+  const playBtn  = document.getElementById('playBtn');
+  const mixBtn   = document.getElementById('mixBtn');
+
+  rollBtn.disabled = state.turn !== 'roll';
+  playBtn.disabled = !state.selectedCard || (state.turn !== 'player' && state.turn !== 'respond');
+  mixBtn.disabled  = !state.selectedCard || (state.turn !== 'player' && state.turn !== 'respond');
+
+  if(state.playerDie) document.getElementById('playerDie').textContent = state.playerDie;
+  if(state.aiDie)     document.getElementById('aiDie').textContent     = state.aiDie;
+}
+
+function renderMixPanel() {
+  const panel = document.getElementById('mixPanel');
+  const targets = document.getElementById('mixTargets');
+
+  if(!state.mixMode) { panel.classList.remove('visible'); return; }
+
+  panel.classList.add('visible');
+  targets.innerHTML = '';
+
+  state.playerHand.forEach(card => {
+    if(card.id === state.mixSource?.id) return;
+    const result = canMix(state.mixSource.name, card.name);
+    if(!result) return;
+    const cd = getCardData(result);
+    const hex = getCardHex(result);
+    const btn = document.createElement('div');
+    btn.className = 'mix-target';
+    btn.style.background = hex || '#444';
+    btn.style.color = cd?.text || '#fff';
+    btn.innerHTML = `${getDisplayName(card.name)} → <strong>${getDisplayName(result)}</strong> (${cd?.points}pt)`;
+    btn.addEventListener('click', () => handleMixTarget(card));
+    targets.appendChild(btn);
+  });
+
+  if(targets.children.length === 0) {
+    targets.innerHTML = '<span style="font-size:11px;color:var(--muted);">No valid mix combinations.</span>';
+  }
+}
+
+function handleMixTarget(targetCard) {
+  const source = state.mixSource;
+  const result = canMix(source.name, targetCard.name);
+  if(!result) return;
+
+  state.playerHand = state.playerHand.filter(c => c.id !== source.id && c.id !== targetCard.id);
+  const newCard = { name: result, id: Math.random() };
+  state.playerHand.push(newCard);
+
+  state.selectedCard = newCard;
+  state.mixMode = false;
+  state.mixSource = null;
+
+  const pts = cardPoints(result);
+  log(`Mixed <span class="em">${getDisplayName(source.name)}</span> + <span class="em">${getDisplayName(targetCard.name)}</span> → <span class="em">${getDisplayName(result)}</span> (${pts}pt)`);
+
+  if(result === 'rainbow') {
+    endGame('win', 'Rainbow card played! Instant victory!');
+    return;
+  }
+
+  render();
+}
+
+function log(msg) {
+  document.getElementById('log').innerHTML = msg;
+}
+
+function roll() {
+  if(state.turn !== 'roll') return;
+  document.getElementById('rollBtn').disabled = true;
+
+  // Big centered dice overlay
+  const overlay = document.createElement('div');
+  overlay.id = 'diceOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:300;background:rgba(240,236,227,0.88);backdrop-filter:blur(8px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;';
+  overlay.innerHTML = `
+    <div style="font-family:'Instrument Serif',serif;font-style:italic;font-size:20px;color:rgba(0,0,0,0.3);">Rolling...</div>
+    <div style="display:flex;gap:56px;align-items:center;">
+      <div style="text-align:center;">
+        <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(0,0,0,0.35);margin-bottom:14px;font-family:'DM Mono',monospace;">You</div>
+        <div id="bigPlayerDie" style="width:110px;height:110px;background:#fff;border:2px solid rgba(0,0,0,0.1);border-radius:22px;display:flex;align-items:center;justify-content:center;font-size:58px;font-weight:700;color:#1a1a1a;box-shadow:0 8px 32px rgba(0,0,0,0.1);">—</div>
+      </div>
+      <div style="font-family:'Instrument Serif',serif;font-style:italic;font-size:52px;color:rgba(0,0,0,0.12);">vs</div>
+      <div style="text-align:center;">
+        <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(0,0,0,0.35);margin-bottom:14px;font-family:'DM Mono',monospace;">AI</div>
+        <div id="bigAiDie" style="width:110px;height:110px;background:#fff;border:2px solid rgba(0,0,0,0.1);border-radius:22px;display:flex;align-items:center;justify-content:center;font-size:58px;font-weight:700;color:#1a1a1a;box-shadow:0 8px 32px rgba(0,0,0,0.1);">—</div>
+      </div>
+    </div>
+    <div id="diceResult" style="font-size:13px;color:rgba(0,0,0,0.4);min-height:22px;font-family:'DM Mono',monospace;letter-spacing:0.04em;"></div>
+  `;
+  document.body.appendChild(overlay);
+
+  const bigP = document.getElementById('bigPlayerDie');
+  const bigA = document.getElementById('bigAiDie');
+  let ticks = 0;
+  const maxTicks = 20;
+
+  const interval = setInterval(() => {
+    bigP.textContent = Math.ceil(Math.random()*6);
+    bigA.textContent = Math.ceil(Math.random()*6);
+    const wobbleP = `rotate(${(Math.random()*14-7).toFixed(1)}deg) scale(${(0.9+Math.random()*0.2).toFixed(2)})`;
+    const wobbleA = `rotate(${(Math.random()*14-7).toFixed(1)}deg) scale(${(0.9+Math.random()*0.2).toFixed(2)})`;
+    bigP.style.transform = wobbleP;
+    bigA.style.transform = wobbleA;
+    ticks++;
+
+    if(ticks >= maxTicks) {
+      clearInterval(interval);
+      bigP.style.transform = 'none';
+      bigA.style.transform = 'none';
+
+      let p = Math.ceil(Math.random()*6);
+      let a = Math.ceil(Math.random()*6);
+      while(p === a) { p = Math.ceil(Math.random()*6); a = Math.ceil(Math.random()*6); }
+
+      bigP.textContent = p;
+      bigA.textContent = a;
+
+      const resultEl = document.getElementById('diceResult');
+      if(p > a) {
+        bigP.style.cssText += 'background:#1a1a1a;color:#fff;border-color:#1a1a1a;animation:diePop 0.4s ease;';
+        resultEl.innerHTML = '<span style="color:#2e7d32;font-weight:500;">You go first!</span>';
+      } else {
+        bigA.style.cssText += 'background:#1a1a1a;color:#fff;border-color:#1a1a1a;animation:diePop 0.4s ease;';
+        resultEl.innerHTML = '<span style="color:#c0392b;font-weight:500;">AI goes first...</span>';
+      }
+
+      // Update small dice
+      const pd = document.getElementById('playerDie');
+      const ad = document.getElementById('aiDie');
+      pd.textContent = p; ad.textContent = a;
+      pd.classList.toggle('highlight', p > a);
+      ad.classList.toggle('highlight', a > p);
+      state.playerDie = p; state.aiDie = a;
+
+      setTimeout(() => {
+        overlay.style.opacity = '0';
+        overlay.style.transition = 'opacity 0.25s ease';
+        setTimeout(() => {
+          overlay.remove();
+          if(p > a) {
+            state.playerTurn = true; state.turn = 'player';
+            state.playerPlayed = null; state.aiPlayed = null;
+            renderPlayed();
+            log(`You rolled <span class="em">${p}</span>, AI rolled <span class="em">${a}</span>. <span class="win">You go first</span> — select a card to play.`);
+          } else {
+            state.playerTurn = false; state.turn = 'ai';
+            state.playerPlayed = null; state.aiPlayed = null;
+            renderPlayed();
+            log(`You rolled <span class="em">${p}</span>, AI rolled <span class="em">${a}</span>. <span class="lose">AI goes first</span>...`);
+            setTimeout(aiPlay, 800);
+          }
+          updateStatus(); updateButtons();
+        }, 250);
+      }, 900);
+    }
+  }, 55);
+}
+
+function playCard() {
+  if(!state.selectedCard) return;
+  if(state.turn !== 'player' && state.turn !== 'respond') return;
+
+  const card = state.selectedCard;
+
+  if(card.name === 'rainbow') {
+    state.playerPlayed = card;
+    state.playerHand = state.playerHand.filter(c=>c.id!==card.id);
+    renderPlayed();
+    endGame('win', 'Rainbow card played! Instant victory!');
+    return;
+  }
+
+  if(state.turn === 'player') {
+    // player places first
+    state.playerPlayed = card;
+    state.playerHand = state.playerHand.filter(c=>c.id!==card.id);
+    state.selectedCard = null;
+    state.turn = 'ai';
+    renderPlayed();
+    if(state.playerHand.length === 0) {
+      log(`You played your last card — <span class="em">${card.name}</span>. AI must respond...`);
+    } else {
+      log(`You played <span class="em">${card.name}</span> (${cardPoints(card.name)}pt). AI must respond...`);
+    }
+    render();
+    setTimeout(aiRespond, 1000);
+
+  } else if(state.turn === 'respond') {
+    const aiPts = cardPoints(state.aiPlayed.name);
+    const aiName = state.aiPlayed.name;
+    const playerPts = cardPoints(card.name);
+    const playerName = card.name;
+
+    const exactMatch = playerName === aiName && playerPts === aiPts;
+    const stronger = playerPts > aiPts;
+
+    if(!exactMatch && !stronger) {
+      log(`<span class="lose">Invalid!</span> Play <span class="em">${aiName}</span> to tie, or any card with more than <span class="em">${aiPts}pt</span> to win.`);
+      return;
+    }
+
+    state.playerPlayed = card;
+    state.playerHand = state.playerHand.filter(c=>c.id!==card.id);
+    state.selectedCard = null;
+    renderPlayed();
+
+    if(stronger) {
+      log(`You played <span class="em">${playerName}</span> (${playerPts}pt) — stronger! <span class="win">You take next turn!</span>`);
+      state.playerTurn = true;
+      nextRound('player');
+    } else {
+      log(`You matched with <span class="em">${playerName}</span>. Tie — rolling again next round.`);
+      nextRound('roll');
+    }
+  }
+}
+
+function aiPlay() {
+  if(state.aiHand.length === 0) { endGame('win', 'AI has no cards left!'); return; }
+  if(checkRainbow(state.aiHand)) { endGame('lose', 'AI assembled the rainbow! You lose.'); return; }
+
+  // proactively mix before deciding what to play
+  aiProactiveMix();
+  renderHand('aiHand', state.aiHand, false);
+
+  // AI picks lowest value card to play first, saving strong cards
+  const sorted = [...state.aiHand].sort((a,b) => cardPoints(a.name)-cardPoints(b.name));
+  const card = sorted[0];
+
+  state.aiPlayed = card;
+  state.aiHand = state.aiHand.filter(c=>c.id!==card.id);
+  state.turn = 'respond';
+  renderPlayed();
+
+  log(`AI played <span class="em">${card.name}</span> (${cardPoints(card.name)}pt). Play <span class="em">${card.name}</span> to tie, or any card with more than ${cardPoints(card.name)}pt to win the turn.`);
+  render();
+}
+
+function aiRespond() {
+  // try proactive mixing first to build stronger cards
+  aiProactiveMix();
+  renderHand('aiHand', state.aiHand, false);
+
+  const needed = cardPoints(state.playerPlayed.name);
+  const neededName = state.playerPlayed.name;
+
+  const exactMatch = state.aiHand.find(c => c.name === neededName && cardPoints(c.name) === needed);
+  const stronger = state.aiHand.filter(c => cardPoints(c.name) > needed);
+
+  if(!exactMatch && stronger.length === 0) {
+    const mixResult = aiTryMix(needed);
+    if(mixResult && cardPoints(mixResult.name) > needed) {
+      log(`AI mixed cards to create <span class="em">${mixResult.name}</span> (${cardPoints(mixResult.name)}pt).`);
+      setTimeout(() => aiRespondWithCard(mixResult, needed, neededName), 600);
+      return;
+    }
+    log(`<span class="win">AI can't respond to your ${neededName} (${needed}pt)! You win this round!</span>`);
+    endGame('win', `AI couldn't match your ${neededName}!`);
+    return;
+  }
+
+  let card;
+  if(exactMatch && stronger.length === 0) {
+    card = exactMatch;
+  } else if(!exactMatch) {
+    stronger.sort((a,b) => cardPoints(a.name) - cardPoints(b.name));
+    card = stronger[0];
+  } else {
+    // has both — prefer exact match to save stronger cards
+    card = exactMatch;
+  }
+
+  aiRespondWithCard(card, needed, neededName);
+}
+
+function aiRespondWithCard(card, needed, neededName) {
+  const aiPts = cardPoints(card.name);
+  state.aiPlayed = card;
+  state.aiHand = state.aiHand.filter(c=>c.id!==card.id);
+  renderPlayed();
+
+  if(card.name === 'rainbow') {
+    endGame('lose', 'AI played the Rainbow card! Instant defeat!');
+    return;
+  }
+
+  if(aiPts > needed) {
+    log(`AI responded with <span class="em">${card.name}</span> (${aiPts}pt) — stronger! <span class="lose">AI takes next turn.</span>`);
+    state.playerTurn = false;
+    nextRound('ai');
+  } else {
+    log(`AI matched with <span class="em">${card.name}</span>. Tie — rolling again.`);
+    nextRound('roll');
+  }
+}
+
+function aiProactiveMix() {
+  let improved = true;
+  let mixCount = 0;
+  while(improved && mixCount < 8) {
+    improved = false;
+    for(let i=0; i<state.aiHand.length; i++) {
+      for(let j=i+1; j<state.aiHand.length; j++) {
+        const a = state.aiHand[i];
+        const b = state.aiHand[j];
+        const result = canMix(a.name, b.name);
+        if(!result) continue;
+        const resultPts = cardPoints(result);
+        if(resultPts > cardPoints(a.name) && resultPts > cardPoints(b.name)) {
+          state.aiHand = state.aiHand.filter(c=>c.id!==a.id && c.id!==b.id);
+          state.aiHand.push({name:result, id:Math.random()});
+          improved = true;
+          mixCount++;
+          break;
+        }
+      }
+      if(improved) break;
+    }
+  }
+}
+
+function aiTryMix(neededPts) {
+  let improved = true;
+  while(improved) {
+    improved = false;
+    for(let i=0; i<state.aiHand.length; i++) {
+      for(let j=i+1; j<state.aiHand.length; j++) {
+        const a = state.aiHand[i];
+        const b = state.aiHand[j];
+        const result = canMix(a.name, b.name);
+        if(!result) continue;
+        const resultPts = cardPoints(result);
+        if(resultPts > cardPoints(a.name) && resultPts > cardPoints(b.name)) {
+          state.aiHand = state.aiHand.filter(c=>c.id!==a.id && c.id!==b.id);
+          const newCard = {name:result, id:Math.random()};
+          state.aiHand.push(newCard);
+          improved = true;
+          if(resultPts > neededPts) return newCard;
+          break;
+        }
+      }
+      if(improved) break;
+    }
+  }
+  const strongest = [...state.aiHand].sort((a,b)=>cardPoints(b.name)-cardPoints(a.name))[0];
+  return strongest && cardPoints(strongest.name) > neededPts ? strongest : null;
+}
+
+function nextRound(nextTurn) {
+  state.round++;
+  state.selectedCard = null;
+  state.mixMode = false;
+
+  setTimeout(() => {
+    state.playerPlayed = null;
+    state.aiPlayed = null;
+
+    if(nextTurn === 'roll') {
+      state.turn = 'roll';
+      state.playerDie = null;
+      state.aiDie = null;
+      document.getElementById('playerDie').textContent = '—';
+      document.getElementById('aiDie').textContent = '—';
+    } else if(nextTurn === 'player') {
+      state.turn = 'player';
+    } else {
+      state.turn = 'ai';
+      setTimeout(aiPlay, 800);
+    }
+
+    render();
+  }, 1200);
+}
+
+function startMix() {
+  if(!state.selectedCard) return;
+  state.mixMode = true;
+  state.mixSource = state.selectedCard;
+  log(`Mixing <span class="em">${state.selectedCard.name}</span> — select another card to combine with.`);
+  renderMixPanel();
+}
+
+function endGame(result, msg) {
+  if(result === 'win') {
+    launchConfetti();
+    setTimeout(() => showEndOverlay(result, msg), 400);
+  } else {
+    showEndOverlay(result, msg);
+  }
+}
+
+function showEndOverlay(result, msg) {
+  const overlay = document.getElementById('overlay');
+  const titleEl = document.getElementById('overlayTitle');
+  const subEl   = document.getElementById('overlaySub');
+
+  titleEl.textContent = result === 'win' ? 'You win!' : 'You lose.';
+
+  // Build stats
+  const rounds = state.round;
+  const cardsLeft = state.playerHand.length;
+  const aiCardsLeft = state.aiHand.length;
+  subEl.innerHTML = `
+    <div style="margin-bottom:12px;">${msg}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:16px 0;text-align:center;">
+      <div>
+        <div style="font-size:28px;font-weight:600;font-family:'Instrument Serif',serif;font-style:italic;">${rounds}</div>
+        <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-top:4px;">Rounds</div>
+      </div>
+      <div>
+        <div style="font-size:28px;font-weight:600;font-family:'Instrument Serif',serif;font-style:italic;">${cardsLeft}</div>
+        <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-top:4px;">Your cards left</div>
+      </div>
+      <div>
+        <div style="font-size:28px;font-weight:600;font-family:'Instrument Serif',serif;font-style:italic;">${aiCardsLeft}</div>
+        <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-top:4px;">AI cards left</div>
+      </div>
+    </div>
+  `;
+
+  const box = overlay.querySelector('.overlay-box');
+  box.style.animation = 'winPop 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards';
+  overlay.style.display = 'flex';
+}
+
+function launchConfetti() {
+  const colors = ['#e05252','#e8c547','#4a7fc1','#8b5cf6','#4caf6e','#e8843a','#e879a0','#22d3ee'];
+  const container = document.createElement('div');
+  container.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:500;overflow:hidden;';
+  document.body.appendChild(container);
+
+  for(let i = 0; i < 80; i++) {
+    const piece = document.createElement('div');
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    const size = 6 + Math.random() * 10;
+    const left = Math.random() * 100;
+    const delay = Math.random() * 0.8;
+    const duration = 1.5 + Math.random() * 1.5;
+    const isCircle = Math.random() > 0.5;
+
+    piece.style.cssText = `
+      position: absolute;
+      top: -20px;
+      left: ${left}%;
+      width: ${size}px;
+      height: ${size}px;
+      background: ${color};
+      border-radius: ${isCircle ? '50%' : '2px'};
+      animation: confettiFall ${duration}s ${delay}s ease-in forwards;
+    `;
+    container.appendChild(piece);
+  }
+
+  setTimeout(() => container.remove(), 4000);
+}
+
+
+const SKINS = [
+  {
+    id: 'default',
+    name: 'Default',
+    colors: ['#e05252','#e8c547','#4a7fc1','#f0ede8'],
+    cardBg: null,
+    cardBorder: 'rgba(255,255,255,0.2)',
+    backBg: '#1a1a1a',
+    tableBg: null,
+  },
+  {
+    id: 'cold-ocean',
+    name: 'Cold Ocean',
+    colors: ['#257174','#2866a4','#3483a2','#4fa3c4'],
+    cardBg: (name) => ({ red:'#2866a4', yellow:'#4fa3c4', blue:'#257174', white:'#5591ce' })[name] || null,
+    cardBorder: 'rgba(255,255,255,0.25)',
+    backBg: '#1a2744',
+    tableBg: '#1e3a5f',
+  },
+  {
+    id: 'winter',
+    name: 'Winter',
+    colors: ['#dde2e9','#c7cfe0','#b7c7d2','#a0b5ca'],
+    cardBg: (name) => ({ red:'#c7cfe0', yellow:'#dde2e9', blue:'#a0b5ca', white:'#b7cad7' })[name] || null,
+    cardBorder: 'rgba(0,0,0,0.1)',
+    backBg: '#2a3a4a',
+    tableBg: '#c0c8d8',
+  },
+  {
+    id: 'forest-night',
+    name: 'Forest Night',
+    colors: ['#242a3d','#1e222f','#241b32','#3a4a2a'],
+    cardBg: (name) => ({ red:'#3a2a3a', yellow:'#3a4a2a', blue:'#1e222f', white:'#2a3a4a' })[name] || null,
+    cardBorder: 'rgba(255,255,255,0.1)',
+    backBg: '#111322',
+    tableBg: '#1a1f2e',
+  },
+];
+
+let activeSkin = SKINS[0];
+
+function initSkinBar() {
+  const bar = document.getElementById('skinBar');
+  SKINS.forEach(skin => {
+    const btn = document.createElement('div');
+    btn.className = `skin-swatch${skin.id === activeSkin.id ? ' active' : ''}`;
+    btn.dataset.skinId = skin.id;
+    btn.innerHTML = `
+      ${skin.colors.map(c => `<div class="skin-dot" style="background:${c};"></div>`).join('')}
+      <span class="skin-name">${skin.name}</span>
+    `;
+    btn.addEventListener('click', () => {
+      activeSkin = skin;
+      document.querySelectorAll('.skin-swatch').forEach(s => s.classList.remove('active'));
+      btn.classList.add('active');
+      applySkin();
+      render();
+    });
+    bar.appendChild(btn);
+  });
+}
+
+function applySkin() {
+  const skin = activeSkin;
+  // table background
+  const aiZone = document.querySelector('.ai-zone');
+  const battleArea = document.querySelector('.battle-area');
+  if(skin.tableBg) {
+    if(aiZone) aiZone.style.background = skin.tableBg;
+    if(battleArea) battleArea.style.background = skin.tableBg + '44';
+  } else {
+    if(aiZone) aiZone.style.background = '';
+    if(battleArea) battleArea.style.background = '';
+  }
+}
+
+function getSkinCardBg(cardName) {
+  if(!activeSkin || activeSkin.id === 'default') return null;
+  if(typeof activeSkin.cardBg === 'function') return activeSkin.cardBg(cardName);
+  return null;
+}
+
+function getSkinBackBg() {
+  return activeSkin?.backBg || '#1a1a1a';
+}
+
+function getSkinCardBorder() {
+  return activeSkin?.cardBorder || 'rgba(255,255,255,0.2)';
+}
+
+document.getElementById('rollBtn').addEventListener('click', roll);
+document.getElementById('playBtn').addEventListener('click', playCard);
+document.getElementById('mixBtn').addEventListener('click', startMix);
+document.getElementById('surrenderBtn').addEventListener('click', () => endGame('lose', 'You surrendered.'));
+
+// ── TUTORIAL ──
+const TUTORIAL_STEPS = [
+  {
+    title: 'Welcome to Chroma',
+    body: 'A card game where <strong>color is power</strong>. Mix cards to create stronger colors, and outlast your opponent.',
+    target: null,
+    position: 'center',
+  },
+  {
+    title: 'Your Hand',
+    body: 'These are your cards. Each card has a <strong>color</strong> and a <strong>point value</strong>. Base colors (red, blue, yellow, white) start at <strong>3pt</strong>.',
+    target: () => document.getElementById('playerHand'),
+    position: 'above',
+  },
+  {
+    title: 'AI\'s Hand',
+    body: 'Your opponent\'s cards are face down. You can see <strong>how many</strong> cards they have, but not what they are.',
+    target: () => document.getElementById('aiHand'),
+    position: 'below',
+  },
+  {
+    title: 'The Battle Zone',
+    body: 'Each round, one player places a card here. The other must respond with the <strong>exact same card</strong> to tie, or any <strong>higher point card</strong> to win the turn.',
+    target: null,
+    position: 'center',
+  },
+  {
+    title: 'Roll the Dice',
+    body: 'Each round starts with a dice roll. <strong>Higher roll goes first</strong> and places a card. Win a round and you automatically go first next round — no rolling needed.',
+    target: null,
+    position: 'center',
+  },
+  {
+    title: 'Mix Cards',
+    body: 'Select a card, then click <strong>Mix Cards</strong>. Choose another card to combine them — points add up with no limit. Red(3) + Blue(3) = 6pt. Mix that again and go higher.',
+    target: null,
+    position: 'center',
+  },
+  {
+    title: 'Flip for Info',
+    body: 'Click a <strong>selected card again</strong> to flip it and see its mix history — all the colors that went into making it.',
+    target: null,
+    position: 'center',
+  },
+  {
+    title: 'The Rainbow Card',
+    body: 'Mix enough colors to create a <strong>Rainbow card</strong>. Play it at any time for an <strong>instant win</strong>. It\'s rare — but it ends the game immediately.',
+    target: null,
+    position: 'center',
+  },
+  {
+    title: 'Ready to play',
+    body: 'You start with <strong>10 cards</strong>. More are dealt at round 5 and 15. If your opponent can\'t match or beat your card, <strong>you win</strong>. Good luck.',
+    target: null,
+    position: 'center',
+  },
+];
+
+let tutorialStep = 0;
+let tutorialEl = null;
+let tutorialHighlight = null;
+
+function showTutorial() {
+  if(tutorialEl) tutorialEl.remove();
+  if(tutorialHighlight) tutorialHighlight.remove();
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'tutorial-overlay';
+  wrapper.id = 'tutorialOverlay';
+
+  const backdrop = document.createElement('div');
+  backdrop.className = 'tutorial-backdrop';
+  wrapper.appendChild(backdrop);
+
+  tutorialEl = wrapper;
+  document.body.appendChild(wrapper);
+
+  renderTutorialStep();
+}
+
+function renderTutorialStep() {
+  // Remove old box and highlight
+  const oldBox = document.querySelector('.tutorial-box');
+  if(oldBox) oldBox.remove();
+  if(tutorialHighlight) { tutorialHighlight.remove(); tutorialHighlight = null; }
+
+  const step = TUTORIAL_STEPS[tutorialStep];
+  const isLast = tutorialStep === TUTORIAL_STEPS.length - 1;
+  const isFirst = tutorialStep === 0;
+
+  // Highlight target element
+  if(step.target) {
+    const targetEl = step.target();
+    if(targetEl) {
+      const rect = targetEl.getBoundingClientRect();
+      const hl = document.createElement('div');
+      hl.className = 'tutorial-highlight';
+      hl.style.position = 'fixed';
+      hl.style.top = (rect.top - 6) + 'px';
+      hl.style.left = (rect.left - 6) + 'px';
+      hl.style.width = (rect.width + 12) + 'px';
+      hl.style.height = (rect.height + 12) + 'px';
+      tutorialEl.appendChild(hl);
+      tutorialHighlight = hl;
+    }
+  }
+
+  // Build box
+  const box = document.createElement('div');
+  box.className = 'tutorial-box';
+
+  // Dots
+  const dots = TUTORIAL_STEPS.map((_, i) =>
+    `<div class="tutorial-dot${i === tutorialStep ? ' active' : ''}"></div>`
+  ).join('');
+
+  box.innerHTML = `
+    <div class="tutorial-step">Step ${tutorialStep + 1} of ${TUTORIAL_STEPS.length}</div>
+    <div class="tutorial-title">${step.title}</div>
+    <div class="tutorial-body">${step.body}</div>
+    <div class="tutorial-nav">
+      <div class="tutorial-dots">${dots}</div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button id="tutSkip" style="background:transparent;border:none;font-family:var(--mono);font-size:10px;letter-spacing:0.06em;color:var(--muted);cursor:pointer;padding:4px 8px;">Skip</button>
+        ${!isFirst ? `<button class="btn" id="tutPrev">← Back</button>` : ''}
+        ${!isLast ? `<button class="btn primary" id="tutNext">Next →</button>` : `<button class="btn primary" id="tutDone">Let's play!</button>`}
+      </div>
+    </div>
+  `;
+
+  // Position box
+  positionTutorialBox(box, step);
+  tutorialEl.appendChild(box);
+
+  // Events
+  document.getElementById('tutSkip')?.addEventListener('click', () => {
+    tutorialEl.remove();
+    tutorialEl = null;
+    if(tutorialHighlight) { tutorialHighlight.remove(); tutorialHighlight = null; }
+  });
+  document.getElementById('tutNext')?.addEventListener('click', () => {
+    tutorialStep++;
+    renderTutorialStep();
+  });
+  document.getElementById('tutPrev')?.addEventListener('click', () => {
+    tutorialStep--;
+    renderTutorialStep();
+  });
+  document.getElementById('tutDone')?.addEventListener('click', () => {
+    tutorialEl.remove();
+    tutorialEl = null;
+    if(tutorialHighlight) { tutorialHighlight.remove(); tutorialHighlight = null; }
+  });
+}
+
+function positionTutorialBox(box, step) {
+  box.style.left = '50%';
+  box.style.transform = 'translateX(-50%)';
+  box.style.top = 'auto';
+  box.style.bottom = 'auto';
+
+  if(step.position === 'center' || !step.target) {
+    box.style.top = '50%';
+    box.style.transform = 'translate(-50%, -50%)';
+    return;
+  }
+
+  const targetEl = step.target();
+  if(!targetEl) {
+    box.style.top = '50%';
+    box.style.transform = 'translate(-50%, -50%)';
+    return;
+  }
+
+  const rect = targetEl.getBoundingClientRect();
+  const margin = 16;
+  const boxH = 280; // estimated height
+  const spaceAbove = rect.top - margin;
+  const spaceBelow = window.innerHeight - rect.bottom - margin;
+
+  let top;
+  if(step.position === 'above' && spaceAbove >= boxH) {
+    top = rect.top - boxH - 12;
+  } else if(spaceBelow >= boxH) {
+    top = rect.bottom + 12;
+  } else if(spaceAbove >= boxH) {
+    top = rect.top - boxH - 12;
+  } else {
+    // not enough room anywhere — center vertically
+    box.style.top = '50%';
+    box.style.transform = 'translate(-50%, -50%)';
+    return;
+  }
+
+  // clamp so box never goes off screen
+  top = Math.max(margin, Math.min(window.innerHeight - boxH - margin, top));
+  box.style.top = top + 'px';
+}
+
+// Show tutorial on first load
+showTutorial();
+
+// Also add a "?" button to replay tutorial
+const helpBtn = document.createElement('button');
+helpBtn.className = 'btn';
+helpBtn.textContent = '?';
+helpBtn.title = 'Show tutorial';
+helpBtn.style.cssText = 'position:fixed;bottom:20px;right:20px;width:36px;height:36px;padding:0;border-radius:50%;font-size:16px;z-index:50;';
+helpBtn.addEventListener('click', () => { tutorialStep = 0; showTutorial(); });
+document.body.appendChild(helpBtn);
+
+initSkinBar();
+startGame();
+</script>
+</body>
+</html>
