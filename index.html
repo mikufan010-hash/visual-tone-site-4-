@@ -1,161 +1,199 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Visual Tone</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
-<style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visual Tone</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Instrument+Serif:ital@0;1&display=swap"
+    rel="stylesheet">
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-:root {
-  --ink: #111;
-  --paper: #f5f3ee;
-  --rule: #d8d5ce;
-  --muted: #999;
-  --mono: 'DM Mono', monospace;
-  --serif: 'Instrument Serif', serif;
-}
+    :root {
+      --ink: #111;
+      --paper: #f5f3ee;
+      --rule: #d8d5ce;
+      --muted: #999;
+      --mono: 'DM Mono', monospace;
+      --serif: 'Instrument Serif', serif;
+    }
 
-body {
-  background: var(--paper);
-  color: var(--ink);
-  font-family: var(--mono);
-  font-size: 13px;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
+    body {
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--mono);
+      font-size: 13px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
 
-header {
-  border-bottom: 1px solid var(--rule);
-  padding: 20px 40px;
-  display: flex;
-  align-items: baseline;
-  gap: 16px;
-}
+    header {
+      border-bottom: 1px solid var(--rule);
+      padding: 20px 40px;
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+    }
 
-.logo { font-family: var(--serif); font-size: 22px; font-style: italic; }
-.logo-sub { font-size: 10px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+    .logo {
+      font-family: var(--serif);
+      font-size: 22px;
+      font-style: italic;
+    }
 
-main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 80px 40px;
-  max-width: 860px;
-}
+    .logo-sub {
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
 
-.tagline {
-  font-family: var(--serif);
-  font-size: 48px;
-  font-style: italic;
-  line-height: 1.15;
-  margin-bottom: 24px;
-  color: var(--ink);
-}
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 80px 40px;
+      max-width: 860px;
+    }
 
-.description {
-  font-size: 13px;
-  color: var(--muted);
-  line-height: 1.8;
-  max-width: 440px;
-  margin-bottom: 56px;
-}
+    .tagline {
+      font-family: var(--serif);
+      font-size: 48px;
+      font-style: italic;
+      line-height: 1.15;
+      margin-bottom: 24px;
+      color: var(--ink);
+    }
 
-.nav-cards {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 1px;
-  border: 1px solid var(--rule);
-  max-width: 720px;
-}
+    .description {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.8;
+      max-width: 440px;
+      margin-bottom: 56px;
+    }
 
-.nav-card {
-  background: var(--paper);
-  padding: 28px;
-  text-decoration: none;
-  color: var(--ink);
-  transition: background 0.15s;
-  display: block;
-}
+    .nav-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 1px;
+      border: 1px solid var(--rule);
+      max-width: 720px;
+    }
 
-.nav-card:hover { background: var(--ink); color: var(--paper); }
-.nav-card:hover .nav-arrow { color: var(--paper); }
-.nav-card:hover .nav-sub { color: rgba(255,255,255,0.5); }
+    .nav-card {
+      background: var(--paper);
+      padding: 28px;
+      text-decoration: none;
+      color: var(--ink);
+      transition: background 0.15s;
+      display: block;
+    }
 
-.nav-label {
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  margin-bottom: 8px;
-}
+    .nav-card:hover {
+      background: var(--ink);
+      color: var(--paper);
+    }
 
-.nav-title {
-  font-family: var(--serif);
-  font-size: 24px;
-  font-style: italic;
-  margin-bottom: 10px;
-}
+    .nav-card:hover .nav-arrow {
+      color: var(--paper);
+    }
 
-.nav-sub {
-  font-size: 11px;
-  color: var(--muted);
-  line-height: 1.6;
-  margin-bottom: 20px;
-  transition: color 0.15s;
-}
+    .nav-card:hover .nav-sub {
+      color: rgba(255, 255, 255, 0.5);
+    }
 
-.nav-arrow {
-  font-size: 18px;
-  color: var(--muted);
-  transition: color 0.15s;
-}
+    .nav-label {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
 
-footer {
-  border-top: 1px solid var(--rule);
-  padding: 16px 40px;
-  font-size: 10px;
-  color: var(--muted);
-  letter-spacing: 0.06em;
-}
-</style>
+    .nav-title {
+      font-family: var(--serif);
+      font-size: 24px;
+      font-style: italic;
+      margin-bottom: 10px;
+    }
+
+    .nav-sub {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 20px;
+      transition: color 0.15s;
+    }
+
+    .nav-arrow {
+      font-size: 18px;
+      color: var(--muted);
+      transition: color 0.15s;
+    }
+
+    footer {
+      border-top: 1px solid var(--rule);
+      padding: 16px 40px;
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+    }
+  </style>
 </head>
+
 <body>
 
-<header>
-  <span class="logo">Visual Tone</span>
-  <span class="logo-sub">A style tool</span>
-</header>
+  <header>
+    <span class="logo">Visual Tone</span>
+    <span class="logo-sub">A style tool</span>
+  </header>
 
-<main>
-  <div class="tagline">Concept in,<br>color out.</div>
-  <p class="description">Type a word — cold, baroque, tokyo, anxious — and get a visual style system back. Color, type, layout, CSS variables.</p>
+  <main>
+    <div class="tagline">Concept in,<br>color out.</div>
+    <p class="description">Type a word — cold, baroque, tokyo, anxious — and get a visual style system back. Color,
+      type, layout, CSS variables.</p>
 
-  <div class="nav-cards">
-    <a class="nav-card" href="generator.html">
-      <div class="nav-label">01</div>
-      <div class="nav-title">Generator</div>
-      <div class="nav-sub">Input a concept,<br>generate a palette.</div>
-      <div class="nav-arrow">→</div>
-    </a>
-    <a class="nav-card" href="gallery.html">
-      <div class="nav-label">02</div>
-      <div class="nav-title">Gallery</div>
-      <div class="nav-sub">Pages built from<br>generated styles.</div>
-      <div class="nav-arrow">→</div>
-    </a>
-    <a class="nav-card" href="chroma.html">
-      <div class="nav-label">03</div>
-      <div class="nav-title">Chroma</div>
-      <div class="nav-sub">A card game built<br>from color logic.</div>
-      <div class="nav-arrow">→</div>
-    </a>
-  </div>
-</main>
+    <div class="nav-cards">
+      <a class="nav-card" href="generator.html">
+        <div class="nav-label">01</div>
+        <div class="nav-title">Generator</div>
+        <div class="nav-sub">Input a concept,<br>generate a palette.</div>
+        <div class="nav-arrow">→</div>
+      </a>
+      <a class="nav-card" href="gallery.html">
+        <div class="nav-label">02</div>
+        <div class="nav-title">Gallery</div>
+        <div class="nav-sub">Pages built from<br>generated styles.</div>
+        <div class="nav-arrow">→</div>
+      </a>
+      <a class="nav-card" href="chroma.html">
+        <div class="nav-label">03</div>
+        <div class="nav-title">Chroma</div>
+        <div class="nav-sub">A card game built<br>from color logic.</div>
+        <div class="nav-arrow">→</div>
+      </a>
+      <a class="nav-card" href="paint.html">
+        <div class="nav-label">04</div>
+        <div class="nav-title">Paint</div>
+        <div class="nav-sub">Draw with generated<br>color palettes.</div>
+        <div class="nav-arrow">→</div>
+      </a>
 
-<footer>Visual Tone — RISD 2026</footer>
+    </div>
+  </main>
+
+  <footer>Visual Tone — RISD 2026</footer>
 
 </body>
+
 </html>
