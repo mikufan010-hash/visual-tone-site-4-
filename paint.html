@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paint — Visual Tone</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f5f3ee;
+  --surface: #fff;
+  --rule: #d8d5ce;
+  --rule2: rgba(0,0,0,0.12);
+  --ink: #111;
+  --muted: #999;
+  --mono: 'DM Mono', monospace;
+  --serif: 'Instrument Serif', serif;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 13px;
+  height: 100vh;
+  display: grid;
+  grid-template-rows: 56px 1fr;
+  overflow: hidden;
+}
+
+header {
+  border-bottom: 1px solid var(--rule);
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+
+.header-left { display: flex; align-items: center; gap: 16px; }
+.logo { font-family: var(--serif); font-style: italic; font-size: 20px; color: var(--ink); text-decoration: none; }
+.logo-sub { font-size: 10px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+
+.header-right { display: flex; align-items: center; gap: 8px; }
+
+.btn {
+  background: transparent;
+  border: 1px solid var(--rule2);
+  border-radius: 4px;
+  padding: 7px 14px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.btn:hover { background: rgba(0,0,0,0.05); }
+.btn.primary { background: var(--ink); color: #fff; border-color: var(--ink); }
+.btn.primary:hover { opacity: 0.8; }
+
+.main {
+  display: grid;
+  grid-template-columns: 220px 1fr 200px;
+  overflow: hidden;
+}
+
+/* LEFT PANEL */
+.panel {
+  border-right: 1px solid var(--rule);
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+  background: var(--surface);
+}
+
+.panel-right {
+  border-left: 1px solid var(--rule);
+  border-right: none;
+  background: var(--surface);
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+}
+
+.panel-label {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+/* COLOR SWATCHES */
+.color-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.color-swatch {
+  aspect-ratio: 1;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform 0.12s, border-color 0.12s;
+  position: relative;
+}
+
+.color-swatch:hover { transform: scale(1.06); }
+.color-swatch.active { border-color: var(--ink); transform: scale(1.06); }
+.color-swatch .swatch-name {
+  position: absolute;
+  bottom: 4px;
+  left: 0; right: 0;
+  text-align: center;
+  font-size: 8px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+/* TOOLS */
+.tool-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+
+.tool-btn {
+  padding: 10px 6px;
+  border: 1px solid var(--rule2);
+  border-radius: 6px;
+  background: var(--bg);
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-align: center;
+  color: var(--muted);
+  transition: all 0.12s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.tool-btn:hover { border-color: var(--ink); color: var(--ink); background: #fff; }
+.tool-btn.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+.tool-icon { font-size: 18px; line-height: 1; }
+
+/* BRUSH SIZE */
+.size-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.size-btn {
+  border-radius: 50%;
+  background: var(--ink);
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color 0.12s, transform 0.12s;
+  flex-shrink: 0;
+}
+
+.size-btn.active { border-color: var(--ink); background: transparent; outline: 2px solid var(--ink); outline-offset: 2px; }
+.size-btn:hover { transform: scale(1.1); }
+
+/* KEYWORD INPUT */
+.keyword-input {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--rule2);
+  border-radius: 4px;
+  padding: 8px 10px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink);
+  outline: none;
+  margin-bottom: 6px;
+}
+.keyword-input:focus { border-color: var(--ink); }
+.keyword-input::placeholder { color: var(--muted); }
+
+/* CANVAS */
+.canvas-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e8e4dc;
+  overflow: hidden;
+  position: relative;
+}
+
+canvas {
+  background: #fff;
+  cursor: crosshair;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+  display: block;
+}
+
+canvas.eraser-mode { cursor: cell; }
+
+/* OPACITY */
+input[type=range] {
+  width: 100%;
+  accent-color: var(--ink);
+}
+
+/* PALETTE PREVIEW */
+.palette-strip {
+  display: flex;
+  gap: 3px;
+  height: 24px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.palette-strip-color { flex: 1; }
+
+/* HISTORY */
+.history-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 3px;
+}
+
+.back-link {
+  font-size: 11px;
+  color: var(--muted);
+  text-decoration: none;
+  letter-spacing: 0.06em;
+}
+.back-link:hover { color: var(--ink); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <a class="logo" href="index.html">Visual Tone</a>
+    <span class="logo-sub">Paint</span>
+  </div>
+  <div class="header-right">
+    <button class="btn" id="clearBtn">Clear</button>
+    <button class="btn" id="undoBtn">Undo</button>
+    <button class="btn primary" id="saveBtn">Save ↓</button>
+  </div>
+</header>
+
+<div class="main">
+
+  <!-- LEFT: tools + colors -->
+  <div class="panel">
+
+    <div>
+      <div class="panel-label">Tool</div>
+      <div class="tool-grid">
+        <div class="tool-btn active" id="toolBrush" data-tool="brush">
+          <div class="tool-icon">✏️</div>
+          <span>Brush</span>
+        </div>
+        <div class="tool-btn" id="toolEraser" data-tool="eraser">
+          <div class="tool-icon">◻</div>
+          <span>Eraser</span>
+        </div>
+        <div class="tool-btn" id="toolFill" data-tool="fill">
+          <div class="tool-icon">◉</div>
+          <span>Fill</span>
+        </div>
+        <div class="tool-btn" id="toolLine" data-tool="line">
+          <div class="tool-icon">╱</div>
+          <span>Line</span>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel-label">Size</div>
+      <div class="size-row">
+        <div class="size-btn active" data-size="3"  style="width:8px;height:8px;"></div>
+        <div class="size-btn"        data-size="8"  style="width:14px;height:14px;"></div>
+        <div class="size-btn"        data-size="16" style="width:20px;height:20px;"></div>
+        <div class="size-btn"        data-size="32" style="width:28px;height:28px;"></div>
+        <div class="size-btn"        data-size="56" style="width:36px;height:36px;"></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel-label">Opacity</div>
+      <input type="range" id="opacitySlider" min="5" max="100" value="100" step="5">
+      <div style="font-size:11px;color:var(--muted);margin-top:4px;" id="opacityVal">100%</div>
+    </div>
+
+    <div>
+      <div class="panel-label">Color palette</div>
+      <div class="color-grid" id="colorGrid"></div>
+    </div>
+
+    <div>
+      <div class="panel-label">Current color</div>
+      <div id="currentColorSwatch" style="width:100%;height:40px;border-radius:8px;border:1px solid var(--rule2);transition:background 0.2s;"></div>
+    </div>
+
+  </div>
+
+  <!-- CANVAS -->
+  <div class="canvas-wrap" id="canvasWrap">
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <!-- RIGHT: keyword input + info -->
+  <div class="panel-right">
+
+    <div>
+      <div class="panel-label">Concept keyword</div>
+      <input class="keyword-input" id="keywordInput" placeholder="cold ocean&#10;winter&#10;tokyo jazz..." />
+      <button class="btn primary" id="generateBtn" style="width:100%;">Generate palette →</button>
+    </div>
+
+    <div>
+      <div class="panel-label">Active palette</div>
+      <div class="palette-strip" id="paletteStrip"></div>
+      <div style="font-size:10px;color:var(--muted);margin-top:6px;" id="paletteLabel">Default</div>
+    </div>
+
+    <div>
+      <div class="panel-label">Palette history</div>
+      <div id="paletteHistory" style="font-size:11px;color:var(--muted);line-height:2.2;"></div>
+    </div>
+
+    <div style="margin-top:auto;">
+      <div class="panel-label">Canvas size</div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn" onclick="resizeCanvas(800,600)">800×600</button>
+        <button class="btn" onclick="resizeCanvas(1200,900)">1200×900</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const COLOR_MAP = {
+  cold:{hues:[200,210,220,230],sat:[40,70],lit:[30,75]},
+  ice:{hues:[190,200,210],sat:[20,50],lit:[70,90]},
+  warm:{hues:[20,35,45],sat:[60,90],lit:[40,70]},
+  fire:{hues:[0,15,30],sat:[80,100],lit:[35,60]},
+  hot:{hues:[5,20,35],sat:[75,95],lit:[40,65]},
+  dark:{hues:[220,240,260],sat:[10,30],lit:[5,25]},
+  night:{hues:[230,245,260],sat:[20,45],lit:[8,22]},
+  light:{hues:[50,60,70],sat:[10,30],lit:[88,97]},
+  bright:{hues:[45,55,180],sat:[70,100],lit:[50,70]},
+  neon:{hues:[120,170,290,310],sat:[90,100],lit:[50,65]},
+  space:{hues:[220,240,260,280],sat:[30,60],lit:[5,30]},
+  ocean:{hues:[190,205,220],sat:[50,80],lit:[30,60]},
+  sea:{hues:[185,200,215],sat:[45,75],lit:[35,65]},
+  forest:{hues:[100,120,140],sat:[30,60],lit:[20,50]},
+  desert:{hues:[30,40,50],sat:[40,70],lit:[55,75]},
+  fog:{hues:[200,210,220],sat:[5,20],lit:[70,85]},
+  sunset:{hues:[10,25,40,280,300],sat:[70,95],lit:[45,70]},
+  rain:{hues:[200,215,230],sat:[15,40],lit:[35,65]},
+  snow:{hues:[200,210,220],sat:[5,15],lit:[88,98]},
+  storm:{hues:[220,235,250],sat:[15,35],lit:[15,40]},
+  summer:{hues:[40,55,170,185],sat:[60,90],lit:[55,78]},
+  autumn:{hues:[20,35,50,65],sat:[50,80],lit:[35,60]},
+  spring:{hues:[80,100,150,300],sat:[40,70],lit:[60,80]},
+  winter:{hues:[200,215,230],sat:[10,35],lit:[70,90]},
+  tokyo:{hues:[0,180,200,300],sat:[50,90],lit:[40,70]},
+  paris:{hues:[45,55,200,210],sat:[20,45],lit:[65,85]},
+  berlin:{hues:[210,225,0,10],sat:[10,35],lit:[20,55]},
+  nyc:{hues:[220,235,40,50],sat:[10,30],lit:[15,50]},
+  london:{hues:[200,215,230],sat:[8,20],lit:[35,60]},
+  havana:{hues:[30,45,170,185],sat:[55,85],lit:[50,70]},
+  miami:{hues:[175,190,330,345],sat:[55,85],lit:[55,75]},
+  melancholy:{hues:[220,235,250],sat:[15,35],lit:[25,50]},
+  euphoric:{hues:[45,60,300,315],sat:[70,100],lit:[55,75]},
+  anxious:{hues:[55,70,0,10],sat:[50,80],lit:[40,65]},
+  calm:{hues:[190,205,220],sat:[20,45],lit:[55,75]},
+  nostalgic:{hues:[30,45,200,210],sat:[25,50],lit:[60,80]},
+  romantic:{hues:[340,355,15,25],sat:[45,75],lit:[45,70]},
+  eerie:{hues:[140,160,270,285],sat:[30,60],lit:[15,40]},
+  joy:{hues:[45,60,15,30],sat:[70,100],lit:[55,75]},
+  leather:{hues:[20,32,45],sat:[35,60],lit:[20,45]},
+  marble:{hues:[200,210,30,40],sat:[5,20],lit:[75,92]},
+  rust:{hues:[15,25,35],sat:[55,80],lit:[30,50]},
+  velvet:{hues:[270,285,300],sat:[40,70],lit:[20,45]},
+  gold:{hues:[42,48,54],sat:[70,90],lit:[45,65]},
+  silver:{hues:[210,220,230],sat:[5,20],lit:[65,85]},
+  neon2:{hues:[120,170,290,310],sat:[90,100],lit:[50,65]},
+  cyber:{hues:[170,190,280,300],sat:[80,100],lit:[40,65]},
+  vaporwave:{hues:[280,295,175,190],sat:[60,90],lit:[55,75]},
+  gothic:{hues:[270,285,300,0],sat:[30,60],lit:[8,28]},
+  jazz:{hues:[35,45,260,270],sat:[30,60],lit:[15,50]},
+  coffee:{hues:[25,35,45],sat:[40,65],lit:[15,35]},
+  wine:{hues:[340,355,10],sat:[50,75],lit:[20,40]},
+  honey:{hues:[40,50,58],sat:[65,85],lit:[55,70]},
+  dawn:{hues:[20,35,280,295],sat:[40,70],lit:[65,82]},
+  dusk:{hues:[15,30,255,270],sat:[45,75],lit:[35,60]},
+  midnight:{hues:[230,245,260],sat:[25,50],lit:[5,20]},
+};
+
+function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+function hslToHex(h,s,l){
+  s/=100; l/=100;
+  const a=s*Math.min(l,1-l);
+  const f=n=>{const k=(n+h/30)%12;const c=l-a*Math.max(Math.min(k-3,9-k,1),-1);return Math.round(255*c).toString(16).padStart(2,'0');};
+  return `#${f(0)}${f(8)}${f(4)}`;
+}
+
+function hexToRgb(hex){
+  const r=parseInt(hex.slice(1,3),16);
+  const g=parseInt(hex.slice(3,5),16);
+  const b=parseInt(hex.slice(5,7),16);
+  return {r,g,b};
+}
+
+function getTextColor(hex){
+  const {r,g,b}=hexToRgb(hex);
+  return (0.299*r+0.587*g+0.114*b)/255>0.55?'#111':'#fff';
+}
+
+function parseConcept(text){
+  const words=text.toLowerCase().split(/[\s,\/\-]+/).filter(Boolean);
+  const pools=[];
+  words.forEach(w=>{
+    const key=Object.keys(COLOR_MAP).find(k=>k===w||w.startsWith(k)&&k.length>=4||k.startsWith(w)&&w.length>=4);
+    if(key&&!pools.find(p=>p===COLOR_MAP[key])) pools.push(COLOR_MAP[key]);
+  });
+  if(pools.length===0) pools.push(pick(Object.values(COLOR_MAP)));
+  return pools;
+}
+
+function generatePalette(pools){
+  const colors=[];
+  for(let i=0;i<4;i++){
+    const pool=pick(pools);
+    const h=pick(pool.hues)+rand(-6,6);
+    const s=rand(pool.sat[0],pool.sat[1]);
+    const l=rand(pool.lit[0],pool.lit[1]);
+    colors.push(hslToHex(h,s,l));
+  }
+  return colors;
+}
+
+// ── STATE ──
+let currentColor = '#e05252';
+let currentTool = 'brush';
+let brushSize = 3;
+let opacity = 1;
+let isDrawing = false;
+let lastX = 0, lastY = 0;
+let lineStartX = 0, lineStartY = 0;
+let undoStack = [];
+let strokes = [];
+let currentStroke = null;
+let palette = ['#e05252','#e8c547','#4a7fc1','#f0ede8'];
+let paletteHistory = [];
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas(w,h){
+  canvas.width = w;
+  canvas.height = h;
+  redrawAll();
+}
+
+function initCanvas(){
+  const wrap = document.getElementById('canvasWrap');
+  const w = Math.min(800, wrap.clientWidth - 40);
+  const h = Math.min(600, wrap.clientHeight - 40);
+  canvas.width = w;
+  canvas.height = h;
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0,0,w,h);
+}
+
+function saveUndo(){
+  undoStack.push(JSON.parse(JSON.stringify(strokes)));
+  if(undoStack.length > 30) undoStack.shift();
+}
+
+function undo(){
+  if(undoStack.length === 0) return;
+  strokes = undoStack.pop();
+  redrawAll();
+}
+
+function redrawAll(){
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  strokes.forEach(s => drawStroke(s));
+}
+
+function drawStroke(s){
+  const color = s.colorIndex === -1 ? '#fff' : (palette[s.colorIndex] || '#fff');
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = s.size;
+
+  if(s.type === 'line'){
+    ctx.strokeStyle = hexToRgba(color, s.opacity);
+    ctx.beginPath();
+    ctx.moveTo(s.points[0].x, s.points[0].y);
+    ctx.lineTo(s.points[1].x, s.points[1].y);
+    ctx.stroke();
+  } else {
+    const pts = s.points;
+    ctx.strokeStyle = hexToRgba(color, s.opacity);
+    ctx.fillStyle = hexToRgba(color, s.opacity);
+    if(pts.length === 1){
+      ctx.beginPath();
+      ctx.arc(pts[0].x, pts[0].y, s.size/2, 0, Math.PI*2);
+      ctx.fill();
+    } else {
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for(let i=1;i<pts.length;i++) ctx.lineTo(pts[i].x, pts[i].y);
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
+function getCanvasPos(e){
+  const rect=canvas.getBoundingClientRect();
+  const scaleX=canvas.width/rect.width;
+  const scaleY=canvas.height/rect.height;
+  return {
+    x:(e.clientX-rect.left)*scaleX,
+    y:(e.clientY-rect.top)*scaleY
+  };
+}
+
+function startDraw(e){
+  const {x,y}=getCanvasPos(e);
+  if(currentTool==='fill'){
+    saveUndo();
+    const colorIndex = palette.indexOf(currentColor);
+    const stroke = {type:'fill', x:Math.round(x), y:Math.round(y), colorIndex, opacity:1, size:0, points:[]};
+    strokes.push(stroke);
+    floodFill(Math.round(x),Math.round(y),currentColor);
+    return;
+  }
+  saveUndo();
+  isDrawing = true;
+  lastX=x; lastY=y;
+  lineStartX=x; lineStartY=y;
+  const colorIndex = currentTool==='eraser' ? -1 : palette.indexOf(currentColor);
+  currentStroke = {
+    type: currentTool,
+    colorIndex,
+    size: currentTool==='eraser' ? brushSize*2 : brushSize,
+    opacity: currentTool==='eraser' ? 1 : opacity,
+    points: [{x,y}]
+  };
+  const color = currentTool==='eraser' ? '#fff' : currentColor;
+  ctx.beginPath();
+  ctx.arc(x,y,currentStroke.size/2,0,Math.PI*2);
+  ctx.fillStyle = hexToRgba(color, currentStroke.opacity);
+  ctx.fill();
+}
+
+function draw(e){
+  if(!isDrawing || !currentStroke) return;
+  const {x,y}=getCanvasPos(e);
+  if(currentTool==='line'){
+    redrawAll();
+    ctx.beginPath();
+    ctx.moveTo(lineStartX,lineStartY);
+    ctx.lineTo(x,y);
+    ctx.strokeStyle=hexToRgba(currentColor,opacity);
+    ctx.lineWidth=brushSize;
+    ctx.lineCap='round';
+    ctx.stroke();
+    currentStroke.points=[{x:lineStartX,y:lineStartY},{x,y}];
+    return;
+  }
+  const color = currentTool==='eraser'?'#fff':currentColor;
+  ctx.beginPath();
+  ctx.moveTo(lastX,lastY);
+  ctx.lineTo(x,y);
+  ctx.strokeStyle=hexToRgba(color,currentStroke.opacity);
+  ctx.lineWidth=currentStroke.size;
+  ctx.lineCap='round';
+  ctx.lineJoin='round';
+  ctx.stroke();
+  currentStroke.points.push({x,y});
+  lastX=x; lastY=y;
+}
+
+function stopDraw(){
+  if(!isDrawing) return;
+  isDrawing = false;
+  if(currentStroke){ strokes.push(currentStroke); currentStroke=null; }
+}
+
+
+function hexToRgba(hex,alpha){
+  const {r,g,b}=hexToRgb(hex);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function floodFill(sx,sy,fillColor){
+  const imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
+  const data=imgData.data;
+  const idx=(x,y)=>(y*canvas.width+x)*4;
+  const target=data.slice(idx(sx,sy),idx(sx,sy)+4);
+  const {r,g,b}=hexToRgb(fillColor);
+  const fill=[r,g,b,255];
+  if(target[0]===fill[0]&&target[1]===fill[1]&&target[2]===fill[2]) return;
+  const stack=[[sx,sy]];
+  const match=i=>data[i]===target[0]&&data[i+1]===target[1]&&data[i+2]===target[2]&&data[i+3]===target[3];
+  while(stack.length){
+    const [x,y]=stack.pop();
+    if(x<0||x>=canvas.width||y<0||y>=canvas.height) continue;
+    const i=idx(x,y);
+    if(!match(i)) continue;
+    data[i]=fill[0]; data[i+1]=fill[1]; data[i+2]=fill[2]; data[i+3]=fill[3];
+    stack.push([x+1,y],[x-1,y],[x,y+1],[x,y-1]);
+  }
+  ctx.putImageData(imgData,0,0);
+}
+
+// ── RENDER PALETTE ──
+function renderPalette(){
+  const grid=document.getElementById('colorGrid');
+  const strip=document.getElementById('paletteStrip');
+  grid.innerHTML='';
+  strip.innerHTML='';
+
+  palette.forEach((hex,i)=>{
+    const swatch=document.createElement('div');
+    swatch.className='color-swatch'+(hex===currentColor?' active':'');
+    swatch.style.background=hex;
+    swatch.innerHTML=`<span class="swatch-name" style="color:${getTextColor(hex)};">${hex}</span>`;
+    swatch.addEventListener('click',()=>{
+      currentColor=hex;
+      document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('active'));
+      swatch.classList.add('active');
+      document.getElementById('currentColorSwatch').style.background=hex;
+    });
+    grid.appendChild(swatch);
+
+    const sc=document.createElement('div');
+    sc.className='palette-strip-color';
+    sc.style.background=hex;
+    strip.appendChild(sc);
+  });
+
+  document.getElementById('currentColorSwatch').style.background=currentColor;
+}
+
+function setPalette(colors, label, skipHistory=false){
+  palette=colors;
+  currentColor=colors[0];
+  document.getElementById('paletteLabel').textContent=label||'Custom';
+  renderPalette();
+  redrawAll();
+
+  if(!skipHistory){
+    paletteHistory.unshift({colors:[...colors],label:label||'Custom'});
+    if(paletteHistory.length>5) paletteHistory.pop();
+  }
+  const hist=document.getElementById('paletteHistory');
+  hist.innerHTML='';
+  paletteHistory.forEach(p=>{
+    const row=document.createElement('div');
+    row.style.cssText='cursor:pointer;display:flex;align-items:center;gap:6px;padding:4px 0;';
+    row.innerHTML=p.colors.map(c=>`<div class="history-dot" style="background:${c};"></div>`).join('')+`<span style="font-size:11px;color:var(--muted);">${p.label}</span>`;
+    row.addEventListener('click',()=>setPalette(p.colors,p.label,true));
+    hist.appendChild(row);
+  });
+}
+
+// ── GENERATE ──
+document.getElementById('generateBtn').addEventListener('click',()=>{
+  const concept=document.getElementById('keywordInput').value.trim();
+  if(!concept) return;
+  const pools=parseConcept(concept);
+  const colors=generatePalette(pools);
+  setPalette(colors, concept);
+});
+
+document.getElementById('keywordInput').addEventListener('keydown',e=>{
+  if(e.key==='Enter') document.getElementById('generateBtn').click();
+});
+
+// ── TOOLS ──
+document.querySelectorAll('.tool-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tool-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    currentTool=btn.dataset.tool;
+    canvas.className=currentTool==='eraser'?'eraser-mode':'';
+  });
+});
+
+// ── SIZES ──
+document.querySelectorAll('.size-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.size-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    brushSize=parseInt(btn.dataset.size);
+  });
+});
+
+// ── OPACITY ──
+const opacitySlider=document.getElementById('opacitySlider');
+opacitySlider.addEventListener('input',()=>{
+  opacity=opacitySlider.value/100;
+  document.getElementById('opacityVal').textContent=opacitySlider.value+'%';
+});
+
+// ── CANVAS EVENTS ──
+canvas.addEventListener('mousedown',startDraw);
+canvas.addEventListener('mousemove',draw);
+canvas.addEventListener('mouseup',stopDraw);
+canvas.addEventListener('mouseleave',stopDraw);
+
+// ── CONTROLS ──
+document.getElementById('clearBtn').addEventListener('click',()=>{
+  saveUndo();
+  strokes = [];
+  ctx.fillStyle='#fff';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+});
+
+document.getElementById('undoBtn').addEventListener('click',undo);
+
+document.getElementById('saveBtn').addEventListener('click',()=>{
+  const link=document.createElement('a');
+  link.download='visual-tone-paint.png';
+  link.href=canvas.toDataURL();
+  link.click();
+});
+
+// ── INIT ──
+initCanvas();
+setPalette(['#e05252','#e8c547','#4a7fc1','#f0ede8'],'default');
+</script>
+</body>
+</html>
