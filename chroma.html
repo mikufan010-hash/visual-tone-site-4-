@@ -212,6 +212,118 @@ header {
   100% { transform: translateY(-120vh) rotate(540deg) scale(0.3); opacity: 0; }
 }
 
+/* Mix history popup */
+.mix-history-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  background: rgba(240,236,227,0.88);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mix-history-box {
+  background: #fff;
+  border: 1px solid var(--rule2);
+  border-radius: 16px;
+  padding: 32px 36px;
+  max-width: 480px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.12);
+}
+
+.mix-history-title {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 28px;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+
+.mix-history-pts {
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.07em;
+  margin-bottom: 24px;
+}
+
+.mix-history-equation {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.mix-card-mini {
+  width: 56px;
+  height: 80px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 8px;
+  border: 1px solid rgba(255,255,255,0.2);
+  opacity: 0;
+  transform: translateY(12px) scale(0.85);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  flex-shrink: 0;
+}
+
+.mix-card-mini.visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.mix-card-mini-name {
+  font-size: 8px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  word-break: break-all;
+}
+
+.mix-card-mini-pts {
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--serif);
+  font-style: italic;
+  margin-bottom: 2px;
+}
+
+.mix-op {
+  font-size: 20px;
+  color: var(--muted);
+  font-family: var(--serif);
+  font-style: italic;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.mix-op.visible { opacity: 1; }
+
+.mix-result-card {
+  width: 80px;
+  height: 112px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 10px;
+  border: 1px solid rgba(255,255,255,0.2);
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  flex-shrink: 0;
+}
+
+.mix-result-card.visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
 /* ── SKIN SELECTOR ── */
 .skin-bar {
   display: flex;
@@ -840,6 +952,86 @@ function canMix(a, b) {
 }
 
 
+function showAIMixHistory(card) {
+  const cd = getCardData(card.name);
+  if(!cd) return;
+
+  const components = cd.components || [card.name];
+  const isBase = components.length <= 1;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'mix-history-overlay';
+
+  // Build component cards HTML
+  const compHTML = components.map((c, i) => {
+    const ccd = getCardData(c) || { h:0, s:50, l:50, text:'#fff', points:3 };
+    const chex = hslToHex(ccd.h, ccd.s, ccd.l);
+    const textCol = ccd.text || '#fff';
+    return `
+      <div class="mix-card-mini" id="mixMini${i}" style="background:${chex};">
+        <div class="mix-card-mini-pts" style="color:${textCol};">${ccd.points}</div>
+        <div class="mix-card-mini-name" style="color:${textCol};opacity:0.8;">${c}</div>
+      </div>
+      ${i < components.length - 1 ? `<div class="mix-op" id="mixOp${i}">+</div>` : ''}
+    `;
+  }).join('');
+
+  const resultHex = hslToHex(cd.h, cd.s, cd.l);
+
+  overlay.innerHTML = `
+    <div class="mix-history-box">
+      <div class="mix-history-title">${getDisplayName(card.name)}</div>
+      <div class="mix-history-pts">${cd.points} points${isBase ? ' — base color' : ` — mixed from ${components.length} cards`}</div>
+
+      <div class="mix-history-equation">
+        ${isBase
+          ? `<div class="mix-card-mini" id="mixMini0" style="background:${resultHex};">
+               <div class="mix-card-mini-pts" style="color:${cd.text};">${cd.points}</div>
+               <div class="mix-card-mini-name" style="color:${cd.text};opacity:0.8;">${card.name}</div>
+             </div>`
+          : compHTML
+        }
+        ${!isBase ? `
+          <div class="mix-op" id="mixOpResult" style="font-size:24px;">=</div>
+          <div class="mix-result-card" id="mixResult" style="background:${resultHex};">
+            <div style="font-size:18px;font-weight:600;font-family:'Instrument Serif',serif;font-style:italic;color:${cd.text};">${cd.points}</div>
+            <div style="font-size:9px;letter-spacing:0.05em;text-transform:uppercase;color:${cd.text};opacity:0.8;word-break:break-all;margin-top:2px;">${getDisplayName(card.name)}</div>
+          </div>
+        ` : ''}
+      </div>
+
+      <button class="btn primary" id="mixHistoryClose" style="width:100%;">Close</button>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  // Animate cards in sequence
+  components.forEach((_, i) => {
+    setTimeout(() => {
+      document.getElementById(`mixMini${i}`)?.classList.add('visible');
+      if(i < components.length - 1) {
+        document.getElementById(`mixOp${i}`)?.classList.add('visible');
+      }
+    }, i * 180);
+  });
+
+  // Animate = and result card
+  if(!isBase) {
+    setTimeout(() => {
+      document.getElementById('mixOpResult')?.classList.add('visible');
+      document.getElementById('mixResult')?.classList.add('visible');
+    }, components.length * 180 + 100);
+  } else {
+    setTimeout(() => {
+      document.getElementById('mixMini0')?.classList.add('visible');
+    }, 100);
+  }
+
+  document.getElementById('mixHistoryClose').addEventListener('click', () => overlay.remove());
+  overlay.addEventListener('click', e => { if(e.target === overlay) overlay.remove(); });
+}
+
 function startGame() {
   document.getElementById('overlay').style.display = 'none';
   state = {
@@ -931,14 +1123,20 @@ function renderHand(id, hand, isPlayer) {
     div.dataset.id = card.id;
 
     if(!isPlayer) {
+      const cd = getCardData(card.name);
+      const hex = isRainbow ? null : getCardHex(card.name);
+      const components = cd?.components || [card.name];
+
       div.innerHTML = `
         <div class="card-inner">
-          <div class="card-face" style="background:${hex||'#333'};color:${textCol};">
-            <div class="card-points">${pts}</div>
-            <div class="card-name">${displayName}</div>
+          <div class="card-face" style="background:${hex||'#333'};color:${cd?.text||'#fff'};">
+            <div class="card-points">${cd?.points}</div>
+            <div class="card-name">${getDisplayName(card.name)}</div>
           </div>
           <div class="card-back-cover">Chroma</div>
         </div>`;
+
+      div.style.cursor = 'default';
       el.appendChild(div);
       return;
     }
@@ -1010,19 +1208,36 @@ function renderPlayed() {
   if(state.playerPlayed) { pp.className='played-slot has-card'; pp.innerHTML=slotHTML(state.playerPlayed); }
   else { pp.className='played-slot'; pp.innerHTML='—'; }
 
-  if(state.aiPlayed) { ap.className='played-slot has-card'; ap.innerHTML=slotHTML(state.aiPlayed); }
-  else { ap.className='played-slot'; ap.innerHTML='—'; }
+  if(state.aiPlayed) {
+    const cd = getCardData(state.aiPlayed.name);
+    const isRainbow = state.aiPlayed.name === 'rainbow';
+    const hex = isRainbow ? null : getCardHex(state.aiPlayed.name);
+    const bg = isRainbow ? 'linear-gradient(135deg,#ff6b6b,#ffd93d,#6bcb77,#4ecdc4,#45b7d1,#a855f7)' : hex;
+    ap.className = 'played-slot has-card';
+    ap.style.cursor = 'pointer';
+    ap.title = 'Click to see mix history';
+    ap.innerHTML = slotHTML(state.aiPlayed);
+    ap.onclick = () => showAIMixHistory(state.aiPlayed);
+  } else {
+    ap.className = 'played-slot';
+    ap.style.cursor = 'default';
+    ap.onclick = null;
+    ap.innerHTML = '—';
+  }
 }
 
 function updateStatus() {
   document.getElementById('roundNum').textContent = state.round;
   document.getElementById('playerCount').textContent = state.playerHand.length;
   document.getElementById('aiCount').textContent = state.aiHand.length;
+
+  const cap = getPointCap();
+  const capText = cap === Infinity ? 'no limit' : `max ${cap}pt`;
   const hints = {
-    roll: 'Roll dice',
-    player: 'Your turn — place a card',
+    roll: `Roll dice — ${capText}`,
+    player: `Your turn — ${capText}`,
     ai: 'AI is thinking...',
-    respond: 'Respond to AI card',
+    respond: `Respond — ${capText}`,
   };
   document.getElementById('turnIndicator').textContent = hints[state.turn] || '';
   document.getElementById('actionHint').textContent = hints[state.turn] || '';
@@ -1190,6 +1405,18 @@ function roll() {
   }, 55);
 }
 
+function getPointCap() {
+  if(state.round <= 5) return 6;
+  if(state.round <= 10) return 12;
+  return Infinity;
+}
+
+function pointCapLabel() {
+  const cap = getPointCap();
+  if(cap === Infinity) return 'no limit';
+  return `max ${cap}pt`;
+}
+
 function playCard() {
   if(!state.selectedCard) return;
   if(state.turn !== 'player' && state.turn !== 'respond') return;
@@ -1201,6 +1428,13 @@ function playCard() {
     state.playerHand = state.playerHand.filter(c=>c.id!==card.id);
     renderPlayed();
     endGame('win', 'Rainbow card played! Instant victory!');
+    return;
+  }
+
+  // Enforce point cap
+  const cap = getPointCap();
+  if(cardPoints(card.name) > cap) {
+    log(`<span class="lose">Too strong!</span> Round ${state.round} limit is <span class="em">${cap}pt</span>. Mix less or wait for later rounds.`);
     return;
   }
 
@@ -1253,13 +1487,20 @@ function aiPlay() {
   if(state.aiHand.length === 0) { endGame('win', 'AI has no cards left!'); return; }
   if(checkRainbow(state.aiHand)) { endGame('lose', 'AI assembled the rainbow! You lose.'); return; }
 
-  // proactively mix before deciding what to play
   aiProactiveMix();
   renderHand('aiHand', state.aiHand, false);
 
-  // AI picks lowest value card to play first, saving strong cards
-  const sorted = [...state.aiHand].sort((a,b) => cardPoints(a.name)-cardPoints(b.name));
-  const card = sorted[0];
+  const cap = getPointCap();
+  // AI picks lowest value card within the cap
+  const allowed = state.aiHand.filter(c => cardPoints(c.name) <= cap);
+  if(allowed.length === 0) {
+    // All cards over cap — play lowest anyway (edge case)
+    const sorted = [...state.aiHand].sort((a,b) => cardPoints(a.name)-cardPoints(b.name));
+    var card = sorted[0];
+  } else {
+    const sorted = [...allowed].sort((a,b) => cardPoints(a.name)-cardPoints(b.name));
+    var card = sorted[0];
+  }
 
   state.aiPlayed = card;
   state.aiHand = state.aiHand.filter(c=>c.id!==card.id);
@@ -1271,15 +1512,16 @@ function aiPlay() {
 }
 
 function aiRespond() {
-  // try proactive mixing first to build stronger cards
   aiProactiveMix();
   renderHand('aiHand', state.aiHand, false);
 
   const needed = cardPoints(state.playerPlayed.name);
   const neededName = state.playerPlayed.name;
+  const cap = getPointCap();
 
   const exactMatch = state.aiHand.find(c => c.name === neededName && cardPoints(c.name) === needed);
-  const stronger = state.aiHand.filter(c => cardPoints(c.name) > needed);
+  // stronger cards must also be within cap
+  const stronger = state.aiHand.filter(c => cardPoints(c.name) > needed && cardPoints(c.name) <= cap);
 
   if(!exactMatch && stronger.length === 0) {
     const mixResult = aiTryMix(needed);
@@ -1329,6 +1571,7 @@ function aiRespondWithCard(card, needed, neededName) {
 }
 
 function aiProactiveMix() {
+  const cap = getPointCap();
   let improved = true;
   let mixCount = 0;
   while(improved && mixCount < 8) {
@@ -1340,7 +1583,8 @@ function aiProactiveMix() {
         const result = canMix(a.name, b.name);
         if(!result) continue;
         const resultPts = cardPoints(result);
-        if(resultPts > cardPoints(a.name) && resultPts > cardPoints(b.name)) {
+        // only mix if result is within cap AND better than both sources
+        if(resultPts <= cap && resultPts > cardPoints(a.name) && resultPts > cardPoints(b.name)) {
           state.aiHand = state.aiHand.filter(c=>c.id!==a.id && c.id!==b.id);
           state.aiHand.push({name:result, id:Math.random()});
           improved = true;
@@ -1354,6 +1598,7 @@ function aiProactiveMix() {
 }
 
 function aiTryMix(neededPts) {
+  const cap = getPointCap();
   let improved = true;
   while(improved) {
     improved = false;
@@ -1364,7 +1609,7 @@ function aiTryMix(neededPts) {
         const result = canMix(a.name, b.name);
         if(!result) continue;
         const resultPts = cardPoints(result);
-        if(resultPts > cardPoints(a.name) && resultPts > cardPoints(b.name)) {
+        if(resultPts <= cap && resultPts > cardPoints(a.name) && resultPts > cardPoints(b.name)) {
           state.aiHand = state.aiHand.filter(c=>c.id!==a.id && c.id!==b.id);
           const newCard = {name:result, id:Math.random()};
           state.aiHand.push(newCard);
@@ -1376,7 +1621,7 @@ function aiTryMix(neededPts) {
       if(improved) break;
     }
   }
-  const strongest = [...state.aiHand].sort((a,b)=>cardPoints(b.name)-cardPoints(a.name))[0];
+  const strongest = [...state.aiHand].filter(c => cardPoints(c.name) <= cap).sort((a,b)=>cardPoints(b.name)-cardPoints(a.name))[0];
   return strongest && cardPoints(strongest.name) > neededPts ? strongest : null;
 }
 
