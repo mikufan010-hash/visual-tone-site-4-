@@ -72,6 +72,15 @@ main {
   width: 100%;
 }
 
+@media (max-width: 700px) {
+  main {
+    grid-template-columns: 1fr;
+    padding: 24px 20px;
+    gap: 24px;
+  }
+  .demo-wrap { display: none; }
+}
+
 /* DEMO ANIMATION */
 .demo-wrap {
   display: flex;
@@ -429,9 +438,19 @@ main {
 
   <div>
     <div style="font-family:var(--serif);font-style:italic;font-size:42px;margin-bottom:12px;">Color Memory</div>
-    <div style="font-size:12px;color:var(--muted);line-height:1.8;max-width:320px;margin-bottom:28px;">
+    <div style="font-size:12px;color:var(--muted);line-height:1.8;max-width:320px;margin-bottom:24px;">
       Memorize the palette, then find the colors from a grid of distractors.
     </div>
+
+    <div style="margin-bottom:16px;">
+      <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Concept <span style="color:#ccc;">(optional)</span></div>
+      <div style="display:flex;gap:8px;">
+        <input id="conceptInput" placeholder="cold ocean, tokyo, anxious..." style="flex:1;background:#fff;border:1px solid rgba(0,0,0,0.12);border-radius:4px;padding:8px 12px;font-family:var(--mono);font-size:12px;color:var(--ink);outline:none;" />
+        <button class="btn" id="conceptGenBtn" style="white-space:nowrap;">Generate</button>
+      </div>
+      <div id="conceptPreview" style="display:flex;gap:5px;margin-top:8px;min-height:20px;"></div>
+    </div>
+
     <div style="margin-bottom:20px;">
       <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">Difficulty</div>
       <div class="diff-row">
@@ -725,6 +744,7 @@ function soundHide() {
 
 // ── Color generation
 function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 
 function hslToHex(h,s,l){
   s/=100; l/=100;
@@ -789,33 +809,152 @@ document.querySelectorAll('.diff-btn').forEach(btn=>{
   });
 });
 
+// ── KEYWORD COLOR SYSTEM (from Visual Tone generator) ──
+const COLOR_MAP = {
+  cold:{hues:[200,210,220,230],sat:[40,70],lit:[30,75]},
+  ice:{hues:[190,200,210],sat:[20,50],lit:[70,90]},
+  warm:{hues:[20,35,45],sat:[60,90],lit:[40,70]},
+  fire:{hues:[0,15,30],sat:[80,100],lit:[35,60]},
+  hot:{hues:[5,20,35],sat:[75,95],lit:[40,65]},
+  dark:{hues:[220,240,260],sat:[10,30],lit:[5,25]},
+  night:{hues:[230,245,260],sat:[20,45],lit:[8,22]},
+  light:{hues:[50,60,70],sat:[10,30],lit:[88,97]},
+  neon:{hues:[120,170,290,310],sat:[90,100],lit:[50,65]},
+  space:{hues:[220,240,260,280],sat:[30,60],lit:[5,30]},
+  ocean:{hues:[190,205,220],sat:[50,80],lit:[30,60]},
+  forest:{hues:[100,120,140],sat:[30,60],lit:[20,50]},
+  desert:{hues:[30,40,50],sat:[40,70],lit:[55,75]},
+  fog:{hues:[200,210,220],sat:[5,20],lit:[70,85]},
+  sunset:{hues:[10,25,40,280,300],sat:[70,95],lit:[45,70]},
+  rain:{hues:[200,215,230],sat:[15,40],lit:[35,65]},
+  snow:{hues:[200,210,220],sat:[5,15],lit:[88,98]},
+  summer:{hues:[40,55,170,185],sat:[60,90],lit:[55,78]},
+  autumn:{hues:[20,35,50,65],sat:[50,80],lit:[35,60]},
+  spring:{hues:[80,100,150,300],sat:[40,70],lit:[60,80]},
+  winter:{hues:[200,215,230],sat:[10,35],lit:[70,90]},
+  tokyo:{hues:[0,180,200,300],sat:[50,90],lit:[40,70]},
+  paris:{hues:[45,55,200,210],sat:[20,45],lit:[65,85]},
+  berlin:{hues:[210,225,0,10],sat:[10,35],lit:[20,55]},
+  london:{hues:[200,215,230],sat:[8,20],lit:[35,60]},
+  havana:{hues:[30,45,170,185],sat:[55,85],lit:[50,70]},
+  miami:{hues:[175,190,330,345],sat:[55,85],lit:[55,75]},
+  melancholy:{hues:[220,235,250],sat:[15,35],lit:[25,50]},
+  euphoric:{hues:[45,60,300,315],sat:[70,100],lit:[55,75]},
+  anxious:{hues:[55,70,0,10],sat:[50,80],lit:[40,65]},
+  calm:{hues:[190,205,220],sat:[20,45],lit:[55,75]},
+  romantic:{hues:[340,355,15,25],sat:[45,75],lit:[45,70]},
+  eerie:{hues:[140,160,270,285],sat:[30,60],lit:[15,40]},
+  gold:{hues:[42,48,54],sat:[70,90],lit:[45,65]},
+  velvet:{hues:[270,285,300],sat:[40,70],lit:[20,45]},
+  rust:{hues:[15,25,35],sat:[55,80],lit:[30,50]},
+  cyber:{hues:[170,190,280,300],sat:[80,100],lit:[40,65]},
+  vaporwave:{hues:[280,295,175,190],sat:[60,90],lit:[55,75]},
+  gothic:{hues:[270,285,300,0],sat:[30,60],lit:[8,28]},
+  jazz:{hues:[35,45,260,270],sat:[30,60],lit:[15,50]},
+  coffee:{hues:[25,35,45],sat:[40,65],lit:[15,35]},
+  honey:{hues:[40,50,58],sat:[65,85],lit:[55,70]},
+  dawn:{hues:[20,35,280,295],sat:[40,70],lit:[65,82]},
+  dusk:{hues:[15,30,255,270],sat:[45,75],lit:[35,60]},
+  midnight:{hues:[230,245,260],sat:[25,50],lit:[5,20]},
+};
+
+let conceptPalette = null; // null = use random colors
+
+function parseConcept(text){
+  const words = text.toLowerCase().split(/[\s,\/\-]+/).filter(Boolean);
+  const pools = [];
+  words.forEach(w=>{
+    const key = Object.keys(COLOR_MAP).find(k=>k===w||(w.startsWith(k)&&k.length>=4)||(k.startsWith(w)&&w.length>=4));
+    if(key && !pools.find(p=>p===COLOR_MAP[key])) pools.push(COLOR_MAP[key]);
+  });
+  if(pools.length===0) return null;
+  return pools;
+}
+
+function generateConceptColors(n, pools){
+  const colors = [];
+  const used = new Set();
+  let tries = 0;
+  while(colors.length < n && tries < 200){
+    const pool = pick(pools);
+    const h = pick(pool.hues) + rand(-8,8);
+    const s = rand(pool.sat[0], pool.sat[1]);
+    const l = rand(pool.lit[0], pool.lit[1]);
+    const hex = hslToHex(h,s,l);
+    const distinct = colors.every(c => colorDistance(c,hex) > 50);
+    if(distinct && !used.has(hex)){
+      colors.push(hex);
+      used.add(hex);
+    }
+    tries++;
+  }
+  while(colors.length < n) colors.push(randomColor());
+  return colors;
+}
+
+function updateConceptPreview(colors){
+  const el = document.getElementById('conceptPreview');
+  if(!el) return;
+  el.innerHTML = colors.map(c=>
+    `<div style="width:28px;height:28px;border-radius:6px;background:${c};border:1px solid rgba(0,0,0,0.08);"></div>`
+  ).join('');
+}
+
+// Wire up concept input
+document.getElementById('conceptGenBtn').addEventListener('click', () => {
+  const text = document.getElementById('conceptInput').value.trim();
+  if(!text) return;
+  const pools = parseConcept(text);
+  if(!pools) {
+    document.getElementById('conceptPreview').innerHTML = '<span style="font-size:11px;color:#c0392b;">No matching keywords</span>';
+    conceptPalette = null;
+    return;
+  }
+  const colors = generateConceptColors(config.colors, pools);
+  conceptPalette = { colors, concept: text };
+  updateConceptPreview(colors);
+  runMenuDemo();
+
+  // update demo too
+  runMenuDemo(colors);
+});
+
+document.getElementById('conceptInput').addEventListener('keydown', e => {
+  if(e.key === 'Enter') document.getElementById('conceptGenBtn').click();
+});
+
 document.getElementById('startBtn').addEventListener('click', startGame);
 
 // ── MENU DEMO ANIMATION ──
+function getMenuDemoColors() {
+  if(conceptPalette) {
+    const pools = parseConcept(conceptPalette.concept);
+    return pools ? generateConceptColors(3, pools) : generateDistinctColors(3, 70);
+  }
+  return generateDistinctColors(3, 70);
+}
+
 function runMenuDemo() {
   const tilesEl = document.getElementById('demoTiles');
   const questionEl = document.getElementById('demoQuestion');
   const labelEl = document.getElementById('demoPhaseLabel');
-  if(!tilesEl) return; // game started, stop demo
+  if(!tilesEl || !questionEl || !labelEl) return;
 
-  const colors = generateDistinctColors(3, 70);
+  const colors = getMenuDemoColors();
 
-  // Phase 1: show colors
-  labelEl.textContent = 'Memorize these colors';
+  labelEl.textContent = conceptPalette ? `"${conceptPalette.concept}"` : 'Memorize these colors';
   tilesEl.innerHTML = colors.map(c => {
     const tc = getTextColor(c) === 'rgba(0,0,0,0.6)' ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.5)';
     return `<div class="demo-tile" style="background:${c};"><span class="demo-tile-hex" style="color:${tc};">${c}</span></div>`;
   }).join('');
   questionEl.innerHTML = '';
 
-  // stagger tiles in
   setTimeout(() => {
     tilesEl.querySelectorAll('.demo-tile').forEach((t,i) => {
       setTimeout(() => t.classList.add('visible'), i * 150);
     });
   }, 100);
 
-  // Phase 2: hide colors, show ?
   setTimeout(() => {
     labelEl.textContent = 'Now find them...';
     tilesEl.querySelectorAll('.demo-tile').forEach((t,i) => {
@@ -831,7 +970,6 @@ function runMenuDemo() {
         setTimeout(() => t.classList.add('visible'), i * 100);
       });
 
-      // Phase 3: "find" them one by one
       colors.forEach((c, i) => {
         setTimeout(() => {
           const qTiles = questionEl.querySelectorAll('.demo-q-tile');
@@ -845,7 +983,6 @@ function runMenuDemo() {
         }, 800 + i * 500);
       });
 
-      // Loop
       setTimeout(() => {
         if(document.getElementById('demoTiles')) runMenuDemo();
       }, 800 + colors.length * 500 + 1200);
@@ -866,7 +1003,14 @@ function startGame(){
 
 function startRound(){
   gamePhase='memorize';
-  targetColors = generateDistinctColors(config.colors);
+  // Use concept palette if set, otherwise random
+  if(conceptPalette) {
+    // regenerate fresh colors from same concept each round
+    const pools = parseConcept(conceptPalette.concept);
+    targetColors = pools ? generateConceptColors(config.colors, pools) : generateDistinctColors(config.colors);
+  } else {
+    targetColors = generateDistinctColors(config.colors);
+  }
   foundColors = [];
   wrongClicks = 0;
   showMemorizePhase();
