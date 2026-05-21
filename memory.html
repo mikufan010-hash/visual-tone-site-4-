@@ -62,15 +62,102 @@ header {
 
 main {
   flex: 1;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   align-items: center;
-  justify-content: center;
-  padding: 40px 24px;
-  gap: 32px;
+  padding: 40px;
+  gap: 60px;
+  max-width: 1000px;
+  margin: 0 auto;
+  width: 100%;
 }
 
-/* PHASE LABEL */
+/* DEMO ANIMATION */
+.demo-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.demo-tiles {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  min-height: 140px;
+  align-items: flex-end;
+}
+
+.demo-tile {
+  width: 80px;
+  height: 120px;
+  border-radius: 10px;
+  border: 1px solid rgba(0,0,0,0.08);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 10px;
+  opacity: 0;
+  transform: translateY(16px) scale(0.92);
+  transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+.demo-tile.visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.demo-tile.hidden {
+  opacity: 0;
+  transform: translateY(-12px) scale(0.9);
+}
+
+.demo-tile-hex {
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  opacity: 0.7;
+}
+
+.demo-question {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  min-height: 80px;
+  align-items: center;
+}
+
+.demo-q-tile {
+  width: 60px;
+  height: 80px;
+  border-radius: 8px;
+  border: 2px dashed rgba(0,0,0,0.15);
+  background: rgba(255,255,255,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: var(--muted);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.demo-q-tile.visible { opacity: 1; }
+
+.demo-q-tile.found {
+  border-style: solid;
+  border-color: rgba(46,125,50,0.5);
+}
+
+.demo-phase-label {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: center;
+  min-height: 14px;
+  transition: opacity 0.3s;
+}
+
 .phase-label {
   font-size: 11px;
   letter-spacing: 0.1em;
@@ -341,22 +428,29 @@ main {
 <main id="main">
 
   <div>
-    <div style="font-family:var(--serif);font-style:italic;font-size:42px;text-align:center;margin-bottom:12px;">Color Memory</div>
-    <div style="font-size:12px;color:var(--muted);text-align:center;line-height:1.8;max-width:380px;margin:0 auto 28px;">
+    <div style="font-family:var(--serif);font-style:italic;font-size:42px;margin-bottom:12px;">Color Memory</div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.8;max-width:320px;margin-bottom:28px;">
       Memorize the palette, then find the colors from a grid of distractors.
     </div>
-    <div style="text-align:center;margin-bottom:20px;">
+    <div style="margin-bottom:20px;">
       <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">Difficulty</div>
-      <div class="diff-row" style="justify-content:center;">
+      <div class="diff-row">
         <button class="diff-btn" data-colors="2" data-choices="8"  data-time="3">Easy</button>
         <button class="diff-btn active" data-colors="4" data-choices="12" data-time="3">Normal</button>
         <button class="diff-btn" data-colors="5" data-choices="16" data-time="2">Hard</button>
         <button class="diff-btn" data-colors="6" data-choices="20" data-time="2">Brutal</button>
       </div>
     </div>
-    <div class="btn-row">
+    <div class="btn-row" style="justify-content:flex-start;">
       <button class="btn" id="startBtn">Start →</button>
     </div>
+  </div>
+
+  <!-- DEMO -->
+  <div class="demo-wrap">
+    <div class="demo-phase-label" id="demoPhaseLabel">Memorize these colors</div>
+    <div class="demo-tiles" id="demoTiles"></div>
+    <div class="demo-question" id="demoQuestion"></div>
   </div>
 
 </main>
@@ -696,6 +790,71 @@ document.querySelectorAll('.diff-btn').forEach(btn=>{
 });
 
 document.getElementById('startBtn').addEventListener('click', startGame);
+
+// ── MENU DEMO ANIMATION ──
+function runMenuDemo() {
+  const tilesEl = document.getElementById('demoTiles');
+  const questionEl = document.getElementById('demoQuestion');
+  const labelEl = document.getElementById('demoPhaseLabel');
+  if(!tilesEl) return; // game started, stop demo
+
+  const colors = generateDistinctColors(3, 70);
+
+  // Phase 1: show colors
+  labelEl.textContent = 'Memorize these colors';
+  tilesEl.innerHTML = colors.map(c => {
+    const tc = getTextColor(c) === 'rgba(0,0,0,0.6)' ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.5)';
+    return `<div class="demo-tile" style="background:${c};"><span class="demo-tile-hex" style="color:${tc};">${c}</span></div>`;
+  }).join('');
+  questionEl.innerHTML = '';
+
+  // stagger tiles in
+  setTimeout(() => {
+    tilesEl.querySelectorAll('.demo-tile').forEach((t,i) => {
+      setTimeout(() => t.classList.add('visible'), i * 150);
+    });
+  }, 100);
+
+  // Phase 2: hide colors, show ?
+  setTimeout(() => {
+    labelEl.textContent = 'Now find them...';
+    tilesEl.querySelectorAll('.demo-tile').forEach((t,i) => {
+      setTimeout(() => t.classList.add('hidden'), i * 100);
+    });
+
+    setTimeout(() => {
+      tilesEl.innerHTML = '';
+      questionEl.innerHTML = colors.map(() =>
+        `<div class="demo-q-tile">?</div>`
+      ).join('');
+      questionEl.querySelectorAll('.demo-q-tile').forEach((t,i) => {
+        setTimeout(() => t.classList.add('visible'), i * 100);
+      });
+
+      // Phase 3: "find" them one by one
+      colors.forEach((c, i) => {
+        setTimeout(() => {
+          const qTiles = questionEl.querySelectorAll('.demo-q-tile');
+          if(qTiles[i]) {
+            qTiles[i].style.background = c;
+            qTiles[i].style.borderStyle = 'solid';
+            qTiles[i].style.borderColor = 'rgba(46,125,50,0.5)';
+            qTiles[i].textContent = '';
+            qTiles[i].classList.add('found');
+          }
+        }, 800 + i * 500);
+      });
+
+      // Loop
+      setTimeout(() => {
+        if(document.getElementById('demoTiles')) runMenuDemo();
+      }, 800 + colors.length * 500 + 1200);
+
+    }, 600);
+  }, 2800);
+}
+
+setTimeout(runMenuDemo, 600);
 
 function startGame(){
   score=0; round=1; foundColors=[]; roundResults=[];
