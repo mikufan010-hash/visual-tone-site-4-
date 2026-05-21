@@ -1,167 +1,238 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Visual Tone</title>
-  <link
-    href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Instrument+Serif:ital@0;1&display=swap"
-    rel="stylesheet">
-  <style>
-    *,
-    *::before,
-    *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Visual Tone</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    :root {
-      --ink: #111;
-      --paper: #f5f3ee;
-      --rule: #d8d5ce;
-      --muted: #999;
-      --mono: 'DM Mono', monospace;
-      --serif: 'Instrument Serif', serif;
-    }
+:root {
+  --ink: #111;
+  --paper: #f5f3ee;
+  --rule: #d8d5ce;
+  --muted: #999;
+  --mono: 'DM Mono', monospace;
+  --serif: 'Instrument Serif', serif;
+}
 
-    body {
-      background: var(--paper);
-      color: var(--ink);
-      font-family: var(--mono);
-      font-size: 13px;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 13px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
 
-    header {
-      border-bottom: 1px solid var(--rule);
-      padding: 20px 40px;
-      display: flex;
-      align-items: baseline;
-      gap: 16px;
-    }
+header {
+  border-bottom: 1px solid var(--rule);
+  padding: 20px 40px;
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+}
 
-    .logo {
-      font-family: var(--serif);
-      font-size: 22px;
-      font-style: italic;
-    }
+.logo { font-family: var(--serif); font-size: 22px; font-style: italic; }
+.logo-sub { font-size: 10px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
 
-    .logo-sub {
-      font-size: 10px;
-      color: var(--muted);
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
+main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  max-width: 1100px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 60px 40px;
+  align-items: center;
+}
 
-    main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      padding: 80px 40px;
-      max-width: 860px;
-    }
+.left { padding-right: 60px; }
 
-    .tagline {
-      font-family: var(--serif);
-      font-size: 48px;
-      font-style: italic;
-      line-height: 1.15;
-      margin-bottom: 24px;
-      color: var(--ink);
-    }
+.tagline {
+  font-family: var(--serif);
+  font-size: 52px;
+  font-style: italic;
+  line-height: 1.1;
+  margin-bottom: 20px;
+  color: var(--ink);
+}
 
-    .description {
-      font-size: 13px;
-      color: var(--muted);
-      line-height: 1.8;
-      max-width: 440px;
-      margin-bottom: 56px;
-    }
+.description {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.8;
+  max-width: 380px;
+  margin-bottom: 40px;
+}
 
-    .nav-cards {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
-      gap: 1px;
-      border: 1px solid var(--rule);
-      max-width: 720px;
-    }
+.nav-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  border: 1px solid var(--rule);
+}
 
-    .nav-card {
-      background: var(--paper);
-      padding: 28px;
-      text-decoration: none;
-      color: var(--ink);
-      transition: background 0.15s;
-      display: block;
-    }
+.nav-card {
+  background: var(--paper);
+  padding: 22px;
+  text-decoration: none;
+  color: var(--ink);
+  transition: background 0.15s;
+  display: block;
+}
 
-    .nav-card:hover {
-      background: var(--ink);
-      color: var(--paper);
-    }
+.nav-card:hover { background: var(--ink); color: var(--paper); }
+.nav-card:hover .nav-arrow { color: var(--paper); }
+.nav-card:hover .nav-sub { color: rgba(255,255,255,0.5); }
 
-    .nav-card:hover .nav-arrow {
-      color: var(--paper);
-    }
+.nav-label { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; }
+.nav-title { font-family: var(--serif); font-size: 20px; font-style: italic; margin-bottom: 8px; }
+.nav-sub { font-size: 11px; color: var(--muted); line-height: 1.5; margin-bottom: 16px; transition: color 0.15s; }
+.nav-arrow { font-size: 16px; color: var(--muted); transition: color 0.15s; }
 
-    .nav-card:hover .nav-sub {
-      color: rgba(255, 255, 255, 0.5);
-    }
+/* DEMO */
+.demo { position: relative; }
 
-    .nav-label {
-      font-size: 11px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-    }
+.demo-window {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.1);
+}
 
-    .nav-title {
-      font-family: var(--serif);
-      font-size: 24px;
-      font-style: italic;
-      margin-bottom: 10px;
-    }
+.demo-bar {
+  background: #fff;
+  border-bottom: 1px solid var(--rule);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
 
-    .nav-sub {
-      font-size: 11px;
-      color: var(--muted);
-      line-height: 1.6;
-      margin-bottom: 20px;
-      transition: color 0.15s;
-    }
+.demo-dots { display: flex; gap: 5px; }
+.demo-dot { width: 10px; height: 10px; border-radius: 50%; }
 
-    .nav-arrow {
-      font-size: 18px;
-      color: var(--muted);
-      transition: color 0.15s;
-    }
+.demo-input-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
-    footer {
-      border-top: 1px solid var(--rule);
-      padding: 16px 40px;
-      font-size: 10px;
-      color: var(--muted);
-      letter-spacing: 0.06em;
-    }
-  </style>
+.demo-label {
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.demo-input {
+  flex: 1;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 5px 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink);
+  min-width: 0;
+}
+
+.demo-btn {
+  background: var(--ink);
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  padding: 5px 10px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.demo-cards {
+  padding: 14px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  min-height: 280px;
+}
+
+.demo-card {
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.demo-card.visible { opacity: 1; transform: translateY(0); }
+
+.demo-preview {
+  height: 90px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+
+.demo-preview-main {
+  grid-column: 1;
+  grid-row: 1 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+}
+
+.demo-preview-top { grid-column: 2; grid-row: 1; }
+.demo-preview-bot { grid-column: 2; grid-row: 2; display: flex; align-items: center; padding: 0 6px; gap: 3px; }
+
+.demo-dot-sm { width: 8px; height: 8px; border-radius: 50%; }
+
+.demo-card-body { padding: 8px; background: var(--paper); border-top: 1px solid var(--rule); }
+.demo-card-label { font-size: 8px; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 4px; }
+.demo-css { font-size: 7px; color: var(--muted); line-height: 1.8; }
+.demo-css-key { color: #bbb; }
+.demo-css-val { color: var(--ink); }
+
+/* cursor blink */
+.cursor {
+  display: inline-block;
+  width: 1px;
+  height: 11px;
+  background: var(--ink);
+  margin-left: 1px;
+  vertical-align: middle;
+  animation: blink 1s step-end infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+footer {
+  border-top: 1px solid var(--rule);
+  padding: 16px 40px;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+}
+</style>
 </head>
-
 <body>
 
-  <header>
-    <span class="logo">Visual Tone</span>
-    <span class="logo-sub">A style tool</span>
-  </header>
+<header>
+  <span class="logo">Visual Tone</span>
+  <span class="logo-sub">A style tool</span>
+</header>
 
-  <main>
+<main>
+  <div class="left">
     <div class="tagline">Concept in,<br>color out.</div>
-    <p class="description">Type a word — cold, baroque, tokyo, anxious — and get a visual style system back. Color,
-      type, layout, CSS variables.</p>
+    <p class="description">Type a word — cold, baroque, tokyo, anxious — and get a complete visual style system back.</p>
 
     <div class="nav-cards">
       <a class="nav-card" href="generator.html">
@@ -189,17 +260,186 @@
         <div class="nav-arrow">→</div>
       </a>
       <a class="nav-card" href="memory.html">
-  <div class="nav-label">05</div>
-  <div class="nav-title">Memory</div>
-  <div class="nav-sub">Memorize a palette,<br>find the colors.</div>
-  <div class="nav-arrow">→</div>
-</a>
-
+        <div class="nav-label">05</div>
+        <div class="nav-title">Memory</div>
+        <div class="nav-sub">Memorize a palette,<br>find the colors.</div>
+        <div class="nav-arrow">→</div>
+      </a>
     </div>
-  </main>
+  </div>
 
-  <footer>Visual Tone — RISD 2026</footer>
+  <!-- DEMO ANIMATION -->
+  <div class="demo">
+    <div class="demo-window">
+      <div class="demo-bar">
+        <div class="demo-dots">
+          <div class="demo-dot" style="background:#ff5f57;"></div>
+          <div class="demo-dot" style="background:#febc2e;"></div>
+          <div class="demo-dot" style="background:#28c840;"></div>
+        </div>
+        <div class="demo-input-wrap">
+          <span class="demo-label">Concept</span>
+          <div class="demo-input" id="demoInput"><span id="demoText"></span><span class="cursor"></span></div>
+          <div class="demo-btn">Generate →</div>
+        </div>
+      </div>
+      <div class="demo-cards" id="demoCards"></div>
+    </div>
+  </div>
+</main>
 
+<footer>Visual Tone — RISD 2026</footer>
+
+<script>
+const SEQUENCES = [
+  {
+    concept: 'cold ocean',
+    palettes: [
+      { bg:'#5591ce', surface:'#4fa3c4', accent:'#2866a4', highlight:'#3483a2', text:'#257174', label:'cold blues' },
+      { bg:'#7ec8e3', surface:'#4a7fc1', accent:'#257174', highlight:'#3483a2', text:'#1a4a6e', label:'ocean depths' },
+    ]
+  },
+  {
+    concept: 'forest night',
+    palettes: [
+      { bg:'#2a3d2a', surface:'#1e2f1e', accent:'#3a5a3a', highlight:'#4a6a4a', text:'#111811', label:'forest greens' },
+      { bg:'#242a3d', surface:'#1e222f', accent:'#111322', highlight:'#241b32', text:'#14141f', label:'midnight' },
+    ]
+  },
+  {
+    concept: 'tokyo neon',
+    palettes: [
+      { bg:'#e879a0', surface:'#8b5cf6', accent:'#4a7fc1', highlight:'#22d3ee', text:'#111', label:'neon glow' },
+      { bg:'#1a1a2e', surface:'#e879a0', accent:'#8b5cf6', highlight:'#22d3ee', text:'#f0ede8', label:'tokyo mix' },
+    ]
+  },
+  {
+    concept: 'desert heat',
+    palettes: [
+      { bg:'#f5e6c8', surface:'#e8c547', accent:'#e8843a', highlight:'#c4a052', text:'#7a4a1a', label:'desert sand' },
+      { bg:'#e8843a', surface:'#e8c547', accent:'#c8392b', highlight:'#f5e6c8', text:'#3a1a0a', label:'heat tones' },
+    ]
+  },
+  {
+    concept: 'winter',
+    palettes: [
+      { bg:'#dde2e9', surface:'#c7cfe0', accent:'#b7c7d2', highlight:'#b7cad7', text:'#a0b5ca', label:'winter pale' },
+      { bg:'#f0f4f8', surface:'#dde2e9', accent:'#a0b5ca', highlight:'#7ec8e3', text:'#4a6a8a', label:'snow white' },
+    ]
+  },
+];
+
+let seqIdx = 0;
+let typing = false;
+
+function hslToHex(h,s,l){
+  s/=100;l/=100;
+  const a=s*Math.min(l,1-l);
+  const f=n=>{const k=(n+h/30)%12;const c=l-a*Math.max(Math.min(k-3,9-k,1),-1);return Math.round(255*c).toString(16).padStart(2,'0');};
+  return '#'+f(0)+f(8)+f(4);
+}
+
+function getTextColor(hex){
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return (0.299*r+0.587*g+0.114*b)/255>0.55?'rgba(0,0,0,0.7)':'rgba(255,255,255,0.8)';
+}
+
+function buildCard(p) {
+  const cssLines = [
+    ['--color-bg', p.bg],
+    ['--color-surface', p.surface],
+    ['--color-accent', p.accent],
+  ].map(([k,v])=>`<span class="demo-css-key">${k}:</span> <span class="demo-css-val">${v};</span>`).join('<br>');
+
+  return `
+    <div class="demo-card">
+      <div class="demo-preview">
+        <div class="demo-preview-main" style="background:${p.bg};">
+          <span style="font-size:9px;color:${getTextColor(p.bg)};text-align:center;">${p.label}</span>
+        </div>
+        <div class="demo-preview-top" style="background:${p.surface};"></div>
+        <div class="demo-preview-bot" style="background:${p.accent};">
+          ${[p.bg,p.surface,p.accent,p.highlight,p.text].map(c=>`<div class="demo-dot-sm" style="background:${c};border:1px solid rgba(255,255,255,0.2);"></div>`).join('')}
+        </div>
+      </div>
+      <div class="demo-card-body">
+        <div class="demo-card-label">${p.label}</div>
+        <div class="demo-css">${cssLines}</div>
+      </div>
+    </div>
+  `;
+}
+
+function clearCards() {
+  const cards = document.querySelectorAll('.demo-card');
+  cards.forEach(c => c.classList.remove('visible'));
+  setTimeout(() => {
+    document.getElementById('demoCards').innerHTML = '';
+  }, 400);
+}
+
+function showCards(palettes) {
+  const container = document.getElementById('demoCards');
+  container.innerHTML = palettes.map(p => buildCard(p)).join('');
+  requestAnimationFrame(() => {
+    const cards = container.querySelectorAll('.demo-card');
+    cards.forEach((c, i) => {
+      setTimeout(() => c.classList.add('visible'), i * 200);
+    });
+  });
+}
+
+function typeText(text, el, cb) {
+  el.textContent = '';
+  let i = 0;
+  const interval = setInterval(() => {
+    el.textContent += text[i];
+    i++;
+    if (i >= text.length) {
+      clearInterval(interval);
+      if (cb) cb();
+    }
+  }, 80);
+}
+
+function deleteText(el, cb) {
+  let text = el.textContent;
+  const interval = setInterval(() => {
+    text = text.slice(0, -1);
+    el.textContent = text;
+    if (text.length === 0) {
+      clearInterval(interval);
+      if (cb) cb();
+    }
+  }, 40);
+}
+
+function runSequence() {
+  const seq = SEQUENCES[seqIdx];
+  const textEl = document.getElementById('demoText');
+
+  // Type concept
+  typeText(seq.concept, textEl, () => {
+    setTimeout(() => {
+      // Show cards
+      showCards(seq.palettes);
+
+      // Wait then delete and move to next
+      setTimeout(() => {
+        clearCards();
+        setTimeout(() => {
+          deleteText(textEl, () => {
+            seqIdx = (seqIdx + 1) % SEQUENCES.length;
+            setTimeout(runSequence, 400);
+          });
+        }, 400);
+      }, 3500);
+    }, 600);
+  });
+}
+
+// Start after short delay
+setTimeout(runSequence, 800);
+</script>
 </body>
-
 </html>
